@@ -91,17 +91,24 @@ public class UserService {
             .orElse(null);
     }
 
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
     public User updateProfile(String username, UserProfileResponse updateRequest) {
         User user = findByUsername(username);
         if (user == null) {
             throw new RuntimeException("User not found");
         }
 
-        // Update only the fields that can be modified through the profile
-        user.setName(updateRequest.getName());
+        user.setUsername(updateRequest.getUsername());
+        user.setEmail(updateRequest.getEmail());
         user.setBio(updateRequest.getBio());
         user.setAvatarUrl(updateRequest.getAvatarUrl());
-        user.setUpdatedAt(LocalDateTime.now());
 
         return userRepository.save(user);
     }

@@ -16,6 +16,7 @@ import java.util.List;
 public class UserProfileResponse {
     private String id;
     private String username;
+    private String email;
     private String name;
     private String bio;
     private String avatarUrl;
