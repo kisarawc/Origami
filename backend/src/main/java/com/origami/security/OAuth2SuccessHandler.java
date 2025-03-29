@@ -1,6 +1,8 @@
 package com.origami.security;
 
 import com.origami.model.User;
+import com.origami.model.UserStats;
+import com.origami.model.Badge;
 import com.origami.repository.UserRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +16,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Optional;
 
 @Slf4j
@@ -53,7 +58,23 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             user.setName(name);
             user.setAvatarUrl(picture);
             user.setPassword(""); // OAuth users don't need password
-            user.setRole("user"); // Set role as 'user'
+            user.setRole("user"); // Set role as 'user' for OAuth users
+            user.setStats(UserStats.builder()
+                .creations(0)
+                .followers(0)
+                .following(0)
+                .build());
+            user.setBadges(new ArrayList<>(Arrays.asList(
+                Badge.builder()
+                    .id("welcome")
+                    .name("Welcome")
+                    .icon("👋")
+                    .description("Joined Origami World")
+                    .earnedAt(LocalDateTime.now())
+                    .build()
+            )));
+            user.setCreatedAt(LocalDateTime.now());
+            user.setUpdatedAt(LocalDateTime.now());
             user = userRepository.save(user);
             log.info("New user created: {}", user.getUsername());
         }
@@ -67,6 +88,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             .fromUriString("http://localhost:5173/oauth2/callback/google")
             .queryParam("token", token)
             .queryParam("username", user.getUsername())
+            .queryParam("role", user.getRole())
             .build()
             .toUriString();
 

@@ -38,9 +38,14 @@ public class AuthController {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String token = jwtService.generateToken(userDetails);
             
+            // Get the user to access their role
+            User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+            
             Map<String, Object> response = new HashMap<>();
             response.put("token", token);
             response.put("username", userDetails.getUsername());
+            response.put("role", user.getRole());
             response.put("message", "Login successful");
             
             return ResponseEntity.ok(response);

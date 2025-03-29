@@ -9,6 +9,7 @@ function OAuthCallback() {
     console.log('OAuth callback received params:', Object.fromEntries(searchParams));
     const token = searchParams.get('token');
     const username = searchParams.get('username');
+    const role = searchParams.get('role');
     const error = searchParams.get('error');
 
     if (error) {
@@ -18,10 +19,17 @@ function OAuthCallback() {
     }
 
     if (token && username) {
-      console.log('Storing token and username');
+      console.log('Storing token and user details');
       localStorage.setItem('token', token);
       localStorage.setItem('username', username);
-      navigate('/dashboard');
+      localStorage.setItem('role', role);
+      
+      // Navigate based on role
+      if (role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } else {
       console.error('Missing token or username');
       navigate('/login', { state: { error: 'OAuth login failed: Missing credentials' } });

@@ -9,6 +9,9 @@ import Profile from './features/profile/Profile';
 import UserProfile from './shared/pages/UserProfile';
 import SearchBar from './shared/components/SearchBar';
 import logoImage from './assets/logo.png';
+import AdminDashboard from './features/admin/pages/AdminDashboard';
+import CreateBadge from './features/admin/pages/CreateBadge';
+import CurrentBadges from './features/admin/pages/CurrentBadges';
 
 function Navigation() {
   const navigate = useNavigate();
@@ -83,6 +86,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/create-badge"
+            element={
+              <ProtectedRoute>
+                <CreateBadge />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/current-badges"
+            element={
+              <ProtectedRoute>
+                <CurrentBadges />
               </ProtectedRoute>
             }
           />
