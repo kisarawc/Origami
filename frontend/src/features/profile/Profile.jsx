@@ -15,7 +15,7 @@ function Profile() {
     username: '',
     email: '',
     bio: '',
-    profilePicture: ''
+    avatarUrl: ''
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -48,7 +48,7 @@ function Profile() {
           username: data.username,
           email: data.email,
           bio: data.bio || '',
-          profilePicture: data.avatarUrl || ''
+          avatarUrl: data.avatarUrl || ''
         });
       } else {
         setError('Failed to fetch user profile');
@@ -87,11 +87,11 @@ function Profile() {
     }
 
     // Profile picture URL validation
-    if (editFormData.profilePicture) {
+    if (editFormData.avatarUrl) {
       try {
-        new URL(editFormData.profilePicture);
+        new URL(editFormData.avatarUrl);
       } catch {
-        errors.profilePicture = 'Please enter a valid URL';
+        errors.avatarUrl = 'Please enter a valid URL';
       }
     }
 
@@ -125,7 +125,7 @@ function Profile() {
           username: editFormData.username,
           email: editFormData.email,
           bio: editFormData.bio,
-          avatarUrl: editFormData.profilePicture
+          avatarUrl: editFormData.avatarUrl
         })
       });
 
@@ -376,16 +376,11 @@ function Profile() {
                 name="username"
                 value={editFormData.username}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 rounded-lg border ${
-                  validationErrors.username ? 'border-red-500' : 'border-gray-300'
-                } focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-gray-900 placeholder-gray-400`}
+                className="w-full px-4 py-3 rounded-lg border border-blue-100 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-gray-50"
+                placeholder="Choose a username"
                 required
-                disabled={isLoading}
-                placeholder="Enter your username"
+                disabled={true}
               />
-              {validationErrors.username && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.username}</p>
-              )}
             </div>
 
             <div>
@@ -398,16 +393,11 @@ function Profile() {
                 name="email"
                 value={editFormData.email}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 rounded-lg border ${
-                  validationErrors.email ? 'border-red-500' : 'border-gray-300'
-                } focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-gray-900 placeholder-gray-400`}
-                required
-                disabled={isLoading}
+                className="w-full px-4 py-3 rounded-lg border border-blue-100 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-gray-50"
                 placeholder="Enter your email"
+                required
+                disabled={true}
               />
-              {validationErrors.email && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
-              )}
             </div>
 
             <div>
@@ -432,34 +422,34 @@ function Profile() {
             </div>
 
             <div>
-              <label htmlFor="profilePicture" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="avatarUrl" className="block text-sm font-medium text-gray-700 mb-1">
                 Profile Picture URL
               </label>
               <div className="flex items-center space-x-4">
                 <input
                   type="url"
-                  id="profilePicture"
-                  name="profilePicture"
-                  value={editFormData.profilePicture}
+                  id="avatarUrl"
+                  name="avatarUrl"
+                  value={editFormData.avatarUrl}
                   onChange={handleChange}
                   className={`flex-1 px-4 py-2.5 rounded-lg border ${
-                    validationErrors.profilePicture ? 'border-red-500' : 'border-gray-300'
+                    validationErrors.avatarUrl ? 'border-red-500' : 'border-gray-300'
                   } focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-gray-900 placeholder-gray-400`}
                   placeholder="https://example.com/profile-picture.jpg"
                   disabled={isLoading}
                 />
-                {editFormData.profilePicture && (
+                {editFormData.avatarUrl && (
                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200">
                     <img
-                      src={editFormData.profilePicture}
+                      src={editFormData.avatarUrl}
                       alt="Profile preview"
                       className="w-full h-full object-cover"
                     />
                   </div>
                 )}
               </div>
-              {validationErrors.profilePicture && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.profilePicture}</p>
+              {validationErrors.avatarUrl && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.avatarUrl}</p>
               )}
             </div>
           </div>

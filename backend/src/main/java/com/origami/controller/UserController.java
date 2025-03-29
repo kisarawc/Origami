@@ -40,7 +40,7 @@ public class UserController {
                 .id(user.getId())
                 .username(user.getUsername())
                 .name(user.getName())
-                .avatarUrl(user.getProfilePicture())
+                .avatarUrl(user.getAvatarUrl())
                 .bio(user.getBio())
                 .build())
             .collect(Collectors.toList());
@@ -62,7 +62,7 @@ public class UserController {
             .name(user.getName())
             .email(user.getEmail())
             .bio(user.getBio())
-            .avatarUrl(user.getProfilePicture())
+            .avatarUrl(user.getAvatarUrl())
             .stats(user.getStats())
             .badges(user.getBadges())
             .isFollowing(isFollowing)

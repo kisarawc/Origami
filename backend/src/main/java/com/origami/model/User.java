@@ -34,7 +34,6 @@ public class User implements UserDetails {
     private List<String> roles;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private String profilePicture;
     @Builder.Default
     private boolean enabled = true;
     @Builder.Default

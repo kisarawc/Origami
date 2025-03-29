@@ -120,7 +120,7 @@ public class UserService {
     }
 
     public List<User> searchUsers(String query, String currentUsername) {
-        return userRepository.findByUsernameContainingOrNameContainingIgnoreCase(query, query)
+        return userRepository.findByUsernameContainingIgnoreCase(query)
             .stream()
             .filter(user -> !user.getUsername().equals(currentUsername))
             .toList();
@@ -204,7 +204,7 @@ public class UserService {
         FollowRequest request = FollowRequest.builder()
             .followerId(follower.getId())
             .followerUsername(follower.getUsername())
-            .followerAvatar(follower.getProfilePicture())
+            .followerAvatar(follower.getAvatarUrl())
             .followedId(followed.getId())
             .status("PENDING")
             .createdAt(LocalDateTime.now())

@@ -58,9 +58,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            // Log the error but don't throw it to allow the request to continue
-            // The security context will remain null, and the request will be rejected
-            // by the security filter chain if authentication is required
+
         }
         
         filterChain.doFilter(request, response);
