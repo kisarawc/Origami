@@ -1,12 +1,70 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, Link } from 'react-router-dom';
 import Login from './features/auth/pages/Login';
 import Register from './features/auth/pages/Register';
 import OAuthCallback from './features/auth/pages/OAuthCallback';
 import Dashboard from './shared/pages/Dashboard';
-import Profile from './shared/pages/Profile';
+import Profile from './features/profile/Profile';
+import UserProfile from './shared/pages/UserProfile';
+import SearchBar from './shared/components/SearchBar';
 import logoImage from './assets/logo.png';
+
+function Navigation() {
+  const navigate = useNavigate();
+  const username = localStorage.getItem('username');
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    navigate('/login');
+  };
+
+  return (
+    <nav className="bg-white shadow-lg">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex">
+            <div className="flex-shrink-0 flex items-center">
+              <Link to="/dashboard" className="flex items-center">
+                <img className="h-8 w-auto" src={logoImage} alt="Origami" />
+                <span className="ml-2 text-xl font-bold text-gray-900">Origami</span>
+              </Link>
+            </div>
+            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+              <Link
+                to="/dashboard"
+                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/profile"
+                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+              >
+                Profile
+              </Link>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <div className="flex-shrink-0 mr-4">
+              <SearchBar />
+            </div>
+            <div className="flex items-center">
+              <span className="text-gray-700 mr-4">@{username}</span>
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}
 
 function App() {
   return (
@@ -36,11 +94,18 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/profile/:username"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Redirect root to dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
-
       </div>
     </Router>
   );
@@ -54,11 +119,7 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  return (
-    <>
-      {children}
-    </>
-  );
+  return children;
 }
 
 function Home() {

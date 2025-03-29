@@ -3,40 +3,122 @@ package com.origami.controller;
 import com.origami.model.User;
 import com.origami.service.UserService;
 import com.origami.dto.UserProfileResponse;
+import com.origami.dto.UserSearchResponse;
+import com.origami.security.JwtService;
+import com.origami.model.FollowRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
 
     private final UserService userService;
+    private final JwtService jwtService;
+
+    @GetMapping("/search")
+    public ResponseEntity<List<UserSearchResponse>> searchUsers(
+            @RequestParam String query,
+            Authentication authentication) {
+        String currentUsername = authentication.getName();
+        List<User> users = userService.searchUsers(query, currentUsername);
+        
+        List<UserSearchResponse> response = users.stream()
+            .map(user -> UserSearchResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .name(user.getName())
+                .avatarUrl(user.getProfilePicture())
+                .bio(user.getBio())
+                .build())
+            .collect(Collectors.toList());
+            
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/{username}")
-    public ResponseEntity<UserProfileResponse> getUserProfile(@PathVariable String username) {
-        User user = userService.findByUsername(username);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-
+    public ResponseEntity<UserProfileResponse> getUserProfile(
+            @PathVariable String username,
+            Authentication authentication) {
+        String currentUsername = authentication.getName();
+        User user = userService.getUserByUsername(username);
+        boolean isFollowing = userService.isFollowing(currentUsername, username);
+        
         UserProfileResponse response = UserProfileResponse.builder()
             .id(user.getId())
             .username(user.getUsername())
-            .email(user.getEmail())
             .name(user.getName())
+            .email(user.getEmail())
             .bio(user.getBio())
-            .avatarUrl(user.getAvatarUrl())
+            .avatarUrl(user.getProfilePicture())
             .stats(user.getStats())
             .badges(user.getBadges())
+            .isFollowing(isFollowing)
             .build();
-
+            
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{username}/follow")
+    public ResponseEntity<?> sendFollowRequest(
+            @PathVariable String username,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            String followerUsername = userDetails.getUsername();
+            User followedUser = userService.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+            if (followerUsername.equals(followedUser.getUsername())) {
+                return ResponseEntity.badRequest().body("Cannot follow yourself");
+            }
+
+            // Check if already following
+            if (userService.isFollowing(followerUsername, username)) {
+                return ResponseEntity.badRequest().body("Already following this user");
+            }
+
+            // Check if there's a pending request
+            if (userService.hasPendingFollowRequest(followerUsername, username)) {
+                return ResponseEntity.badRequest().body("Follow request already sent");
+            }
+
+            userService.sendFollowRequest(followerUsername, username);
+            return ResponseEntity.ok().body("Follow request sent successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{username}/follow")
+    public ResponseEntity<?> unfollowUser(
+            @PathVariable String username,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            String followerId = userDetails.getUsername();
+            User followedUser = userService.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+            if (followerId.equals(followedUser.getUsername())) {
+                return ResponseEntity.badRequest().body("Cannot unfollow yourself");
+            }
+
+            userService.unfollowUser(followerId, username);
+            return ResponseEntity.ok().body("Successfully unfollowed user");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PutMapping("/{username}")
@@ -51,10 +133,8 @@ public class UserController {
         }
 
         // Get the current user
-        User currentUser = userService.findByUsername(username);
-        if (currentUser == null) {
-            return ResponseEntity.notFound().build();
-        }
+        User currentUser = userService.findByUsername(username)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         // Check if username is being changed and if it's already taken
         if (!currentUser.getUsername().equals(updateRequest.getUsername())) {
@@ -88,5 +168,63 @@ public class UserController {
             .build();
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/follow-requests")
+    public ResponseEntity<List<FollowRequest>> getPendingFollowRequests(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        List<FollowRequest> requests = userService.getPendingFollowRequests(userDetails.getUsername());
+        return ResponseEntity.ok(requests);
+    }
+
+    @PostMapping("/follow-requests/{requestId}/accept")
+    public ResponseEntity<?> acceptFollowRequest(
+            @PathVariable String requestId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            userService.acceptFollowRequest(requestId);
+            return ResponseEntity.ok().body("Follow request accepted");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/follow-requests/{requestId}/reject")
+    public ResponseEntity<?> rejectFollowRequest(
+            @PathVariable String requestId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            userService.rejectFollowRequest(requestId);
+            return ResponseEntity.ok().body("Follow request rejected");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/{username}/follow-request-status")
+    public ResponseEntity<?> getFollowRequestStatus(
+            @PathVariable String username,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            String followerId = userDetails.getUsername();
+            User followedUser = userService.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+            if (followerId.equals(followedUser.getUsername())) {
+                return ResponseEntity.ok(Map.of("status", "own_profile"));
+            }
+
+            if (userService.isFollowing(followerId, username)) {
+                return ResponseEntity.ok(Map.of("status", "following"));
+            }
+
+            if (userService.hasPendingFollowRequest(followerId, username)) {
+                return ResponseEntity.ok(Map.of("status", "pending"));
+            }
+
+            return ResponseEntity.ok(Map.of("status", "not_following"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 } 

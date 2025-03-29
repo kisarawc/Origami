@@ -1,16 +1,19 @@
 package com.origami.model;
 
 import lombok.Data;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class UserStats {
-    private int creationsCount;
-    private int followersCount;
-    private int followingCount;
+    private int creations;
+    private int followers;
+    private int following;
+    private int likes;
+    private int comments;
+    private int shares;
 } 

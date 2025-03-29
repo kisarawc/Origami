@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import FollowRequests from '../components/FollowRequests';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ function Dashboard() {
     <div>
     <div className="min-h-screen bg-gray-50">
       <Header />
-
+      
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <div className="flex flex-col lg:flex-row gap-6">
@@ -116,12 +117,12 @@ function Dashboard() {
           <div className="lg:w-80 flex-shrink-0">
             <div className="sticky top-20 space-y-6">
               {/* Follow Requests */}
-              <section className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Follow Requests</h2>
-                <div className="space-y-4">
-                  {/* Add follow requests content */}
-                </div>
-              </section>
+
+              <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">Follow Requests</h3>
+              <FollowRequests />
+            </div>
+             
 
               {/* Suggested Users */}
               <section className="bg-white rounded-xl shadow-sm p-6">

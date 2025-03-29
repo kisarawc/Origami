@@ -22,4 +22,5 @@ public class UserProfileResponse {
     private String avatarUrl;
     private UserStats stats;
     private List<Badge> badges;
+    private boolean isFollowing;
 } 

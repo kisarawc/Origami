@@ -12,6 +12,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
+import java.util.ArrayList;
+import org.bson.types.ObjectId;
 
 @Data
 @NoArgsConstructor
@@ -33,7 +35,12 @@ public class User implements UserDetails {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String profilePicture;
+    @Builder.Default
     private boolean enabled = true;
+    @Builder.Default
+    private List<String> following = new ArrayList<>(); // List of user ObjectIds
+    @Builder.Default
+    private List<String> followers = new ArrayList<>(); // List of user ObjectIds
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

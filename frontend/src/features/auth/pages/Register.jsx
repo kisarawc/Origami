@@ -34,7 +34,7 @@ function Register() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8081/api/v1/users/register', {
+      const response = await fetch('http://localhost:8081/api/v1/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,15 +46,15 @@ function Register() {
         })
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        navigate('/login', { state: { message: 'Registration successful! Please sign in.' } });
-      } else {
-        setError(data.message || 'Registration failed. Please try again.');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
       }
+
+      const data = await response.json();
+      navigate('/login', { state: { message: 'Registration successful! Please sign in.' } });
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setError(err.message || 'An error occurred. Please try again.');
       console.error('Registration error:', err);
     } finally {
       setIsLoading(false);

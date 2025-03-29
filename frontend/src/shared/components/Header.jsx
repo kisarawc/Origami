@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import logoImage from '../../assets/logo.png';
+import SearchBar from './SearchBar';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -21,9 +22,9 @@ const Header = () => {
   const unreadCount = 1
 
   const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { path: '/tutorials', label: 'Tutorials', icon: '📚' },
-    { path: '/profile', label: 'Profile', icon: '👤' }
+    { path: '/dashboard', label: 'Dashboard', icon: '' },
+    { path: '/tutorials', label: 'Tutorials', icon: '' },
+    { path: '/profile', label: 'Profile', icon: '' }
   ];
 
   return (
@@ -44,7 +45,7 @@ const Header = () => {
             </div>
             <h1 className="ml-3 text-xl font-bold text-gray-900">Origami World</h1>
           </div>
-
+          <SearchBar />
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-4">
             {navItems.map((item) => (
