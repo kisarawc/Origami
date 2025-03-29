@@ -19,8 +19,15 @@ function Login() {
 
   useEffect(() => {
     // Check for success message from registration
-    if (location.state?.message) {
-      setSuccess(location.state.message);
+    if (location.state?.success) {
+      setSuccess(location.state.success);
+      // Pre-fill username if provided
+      if (location.state?.username) {
+        setFormData(prev => ({
+          ...prev,
+          username: location.state.username
+        }));
+      }
       // Clear the message from location state
       window.history.replaceState({}, document.title);
     }

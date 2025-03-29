@@ -31,7 +31,7 @@ public class User implements UserDetails {
     private String avatarUrl;
     private UserStats stats;
     private List<Badge> badges;
-    private List<String> roles;
+    private String role;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     @Builder.Default
@@ -43,7 +43,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + (role != null ? role.toUpperCase() : "USER")));
     }
 
     @Override

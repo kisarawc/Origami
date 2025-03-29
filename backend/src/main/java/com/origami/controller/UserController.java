@@ -227,4 +227,21 @@ public class UserController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @DeleteMapping("/{username}")
+    public ResponseEntity<?> deleteUser(
+            @PathVariable String username,
+            Authentication authentication) {
+        // Check if the authenticated user is deleting their own profile
+        if (!authentication.getName().equals(username)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            userService.deleteUser(username);
+            return ResponseEntity.ok().body("Profile deleted successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 } 

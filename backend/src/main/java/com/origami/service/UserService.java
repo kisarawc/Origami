@@ -37,7 +37,7 @@ public class UserService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
     
-    public User createUser(String username, String password, String email) {
+    public User createUser(String username, String password, String email, String role) {
         User user = User.builder()
             .username(username)
             .password(passwordEncoder.encode(password))
@@ -58,7 +58,7 @@ public class UserService {
                     .earnedAt(LocalDateTime.now())
                     .build()
             )))
-            .roles(Arrays.asList("ROLE_USER"))
+            .role("user") // Set single role string
             .createdAt(LocalDateTime.now())
             .updatedAt(LocalDateTime.now())
             .build();
@@ -83,11 +83,36 @@ public class UserService {
         return userRepository.save(user);
     }
     
-    public void deleteUser(String id) {
-        if (!userRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+    public void deleteUser(String username) {
+        User user = findByUsername(username)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        // Delete all follow requests where this user is either follower or followed
+        followRequestRepository.deleteByFollowerIdOrFollowedId(user.getId(), user.getId());
+
+        // Remove this user from other users' followers/following lists
+        List<User> followers = userRepository.findByFollowersContaining(user.getId());
+        List<User> following = userRepository.findByFollowingContaining(user.getId());
+
+        for (User follower : followers) {
+            follower.getFollowing().remove(user.getId());
+            if (follower.getStats() != null) {
+                follower.getStats().setFollowing(Math.max(0, follower.getStats().getFollowing() - 1));
+            }
         }
-        userRepository.deleteById(id);
+
+        for (User followed : following) {
+            followed.getFollowers().remove(user.getId());
+            if (followed.getStats() != null) {
+                followed.getStats().setFollowers(Math.max(0, followed.getStats().getFollowers() - 1));
+            }
+        }
+
+        userRepository.saveAll(followers);
+        userRepository.saveAll(following);
+
+        // Finally, delete the user
+        userRepository.deleteById(user.getId());
     }
 
     public Optional<User> findByUsername(String username) {
