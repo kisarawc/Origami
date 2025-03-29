@@ -51,7 +51,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             user.setUsername(username);
             user.setEmail(email);
             user.setName(name);
-            user.setProfilePicture(picture);
+            user.setAvatarUrl(picture);
             user.setPassword(""); // OAuth users don't need password
             user = userRepository.save(user);
             log.info("New user created: {}", user.getUsername());
