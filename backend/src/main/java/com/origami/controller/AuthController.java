@@ -3,6 +3,7 @@ package com.origami.controller;
 import com.origami.model.User;
 import com.origami.repository.UserRepository;
 import com.origami.security.JwtService;
+import com.origami.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +26,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final UserService userService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
@@ -36,9 +38,14 @@ public class AuthController {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String token = jwtService.generateToken(userDetails);
             
+            // Get the user to access their role
+            User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+            
             Map<String, Object> response = new HashMap<>();
             response.put("token", token);
             response.put("username", userDetails.getUsername());
+            response.put("role", user.getRole());
             response.put("message", "Login successful");
             
             return ResponseEntity.ok(response);
@@ -73,24 +80,36 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
+    public ResponseEntity<?> register(@RequestBody Map<String, String> request) {
         try {
-            if (userRepository.existsByUsername(user.getUsername())) {
+            String username = request.get("username");
+            String password = request.get("password");
+            String email = request.get("email");
+            String role = request.get("role");
+
+            // Password validation
+            if (password == null || password.length() < 4) {
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "Password must be at least 4 characters long");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (userRepository.existsByUsername(username)) {
                 Map<String, String> response = new HashMap<>();
                 response.put("message", "Username already exists");
                 return ResponseEntity.badRequest().body(response);
             }
-            if (userRepository.existsByEmail(user.getEmail())) {
+            if (userRepository.existsByEmail(email)) {
                 Map<String, String> response = new HashMap<>();
                 response.put("message", "Email already exists");
                 return ResponseEntity.badRequest().body(response);
             }
 
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-            userRepository.save(user);
+            User user = userService.createUser(username, password, email, role);
 
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "User registered successfully");
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Account created successfully! Please log in.");
+            response.put("username", username);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> response = new HashMap<>();

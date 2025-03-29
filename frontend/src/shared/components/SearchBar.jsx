@@ -103,7 +103,7 @@ function SearchBar() {
                   className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
                 >
                   <img
-                    src={user.avatarUrl || 'https://via.placeholder.com/40'}
+                    src={user.avatarUrl || 'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2220431045.jpg'}
                     alt={user.username}
                     className="w-10 h-10 rounded-full mr-3"
                   />

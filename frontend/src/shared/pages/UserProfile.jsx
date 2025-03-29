@@ -232,7 +232,7 @@ function UserProfile() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <img
-                src={userData.avatarUrl || 'https://via.placeholder.com/150'}
+                src={userData.avatarUrl || 'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2220431045.jpg'}
                 alt={userData.username}
                 className="h-24 w-24 rounded-full border-4 border-white shadow-lg"
               />

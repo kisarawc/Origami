@@ -19,8 +19,15 @@ function Login() {
 
   useEffect(() => {
     // Check for success message from registration
-    if (location.state?.message) {
-      setSuccess(location.state.message);
+    if (location.state?.success) {
+      setSuccess(location.state.success);
+      // Pre-fill username if provided
+      if (location.state?.username) {
+        setFormData(prev => ({
+          ...prev,
+          username: location.state.username
+        }));
+      }
       // Clear the message from location state
       window.history.replaceState({}, document.title);
     }
@@ -54,11 +61,17 @@ function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        // Store the JWT token
+        // Store the JWT token and user details
         localStorage.setItem('token', data.token);
         localStorage.setItem('username', data.username);
-        // Redirect to dashboard
-        navigate('/dashboard');
+        localStorage.setItem('role', data.role);
+        
+        // Navigate based on role
+        if (data.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         setError(data.message || 'Invalid username or password');
       }

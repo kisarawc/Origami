@@ -11,6 +11,9 @@ function Profile() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('creations');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [editFormData, setEditFormData] = useState({
     username: '',
     email: '',
@@ -169,6 +172,36 @@ function Profile() {
     }));
   };
 
+  const handleDeleteProfile = async () => {
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const username = localStorage.getItem('username');
+      const response = await fetch(`http://localhost:8081/api/v1/users/${username}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setSuccess('Profile deleted successfully');
+        setTimeout(() => {
+          localStorage.removeItem('token');
+          localStorage.removeItem('username');
+          navigate('/login');
+        }, 2000);
+      } else {
+        setError('Failed to delete profile');
+        setIsDeleting(false);
+      }
+    } catch (err) {
+      setError('An error occurred while deleting profile');
+      console.error('Profile delete error:', err);
+      setIsDeleting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -205,16 +238,16 @@ function Profile() {
                   <img
                     src={userData.avatarUrl}
                     alt="Profile"
-                    className="w-32 h-32 rounded-full object-cover"
+                    className="w-32 h-32 rounded-full object-cover border-spacing-1 border-2 border-gray-300"
                   />
                 ) : (
-                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-4xl font-bold">
-                    {userData.name?.charAt(0) || userData.username?.charAt(0)}
-                  </div>
+                  <img
+                    src="https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2220431045.jpg"
+                    alt="Default Profile"
+                    className="w-32 h-32 rounded-full object-cover border-spacing-1 border-2 border-gray-300"
+                  />
                 )}
-                <button className="absolute bottom-0 right-0 bg-blue-500 text-white rounded-full p-2 shadow-lg hover:bg-blue-600">
-                  📷
-                </button>
+
               </div>
               <div className="flex-1 text-center md:text-left">
                 <h1 className="text-2xl font-bold text-gray-900">{userData.name || userData.username}</h1>
@@ -247,8 +280,14 @@ function Profile() {
                   </svg>
                   Edit Profile
                 </button>
-                <button className="p-2 text-gray-600 hover:text-gray-800">
-                  ⚙️
+                <button 
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete Profile
                 </button>
               </div>
             </div>
@@ -257,16 +296,7 @@ function Profile() {
           {/* Badges Section */}
           <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Achievement Badges</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {userData.badges?.map((badge, index) => (
-                <div key={index} className="text-center">
-                  <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-2">
-                    {badge.icon || '🏆'}
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">{badge.name}</p>
-                </div>
-              ))}
-            </div>
+
           </div>
 
           {/* Content Tabs */}
@@ -482,6 +512,64 @@ function Profile() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Delete Profile Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          if (!isDeleting) {
+            setIsDeleteModalOpen(false);
+            setDeleteConfirmation('');
+          }
+        }}
+        title="Delete Profile"
+      >
+        <div className="space-y-6">
+          {isDeleting ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">Deleting your profile...</p>
+              <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
+            </div>
+          ) : (
+            <>
+              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">
+                <p className="font-medium">Warning: This action cannot be undone!</p>
+                <p className="mt-1">To confirm deletion, please type "confirm" in the box below:</p>
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  value={deleteConfirmation}
+                  onChange={(e) => setDeleteConfirmation(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition-all"
+                  placeholder="Type 'confirm' to delete your profile"
+                />
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setIsDeleteModalOpen(false);
+                    setDeleteConfirmation('');
+                  }}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteProfile}
+                  disabled={deleteConfirmation !== 'confirm'}
+                  className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Delete Profile
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </Modal>
     </div>
   );

@@ -13,4 +13,5 @@ public interface FollowRequestRepository extends MongoRepository<FollowRequest, 
     List<FollowRequest> findByFollowedIdAndStatus(String followedId, String status);
     List<FollowRequest> findByFollowerIdAndStatus(String followerId, String status);
     boolean existsByFollowerIdAndFollowedIdAndStatus(String followerId, String followedId, String status);
+    void deleteByFollowerIdOrFollowedId(String followerId, String followedId);
 } 
