@@ -1,17 +1,30 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import logoImage from '../../../assets/logo.png';
 
 function CreateBadge() {
   const navigate = useNavigate();
   const username = localStorage.getItem('username');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     icon: '',
     description: '',
-    criteria: ''
+    criteria: {
+      type: '',
+      count: 0
+    }
   });
+
+  const criteriaTypes = [
+    { id: 'followers', label: 'Follow Count' },
+    { id: 'created_tutorials', label: 'Created Tutorials Count' },
+    { id: 'completed_tutorials', label: 'Completed Tutorials Count' },
+    { id: 'likes_received', label: 'Likes Received' },
+    { id: 'comments_made', label: 'Comments Made' },
+    { id: 'days_active', label: 'Days Active' }
+  ];
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -22,15 +35,48 @@ function CreateBadge() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implement badge creation logic
-    console.log('Creating badge:', formData);
+    try {
+      const response = await fetch('http://localhost:8081/api/v1/badges', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        setShowSuccessModal(true);
+        // Navigate after 2 seconds
+        setTimeout(() => {
+          navigate('/admin/current-badges');
+        }, 2000);
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to create badge');
+      }
+    } catch (error) {
+      console.error('Error creating badge:', error);
+      alert('Failed to create badge');
+    }
   };
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    if (name === 'criteriaType' || name === 'criteriaCount') {
+      setFormData(prev => ({
+        ...prev,
+        criteria: {
+          ...prev.criteria,
+          [name === 'criteriaType' ? 'type' : 'count']: name === 'criteriaCount' ? parseInt(value) : value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   return (
@@ -131,20 +177,51 @@ function CreateBadge() {
                 />
               </div>
 
-              <div>
-                <label htmlFor="criteria" className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-700">
                   Award Criteria
                 </label>
-                <textarea
-                  id="criteria"
-                  name="criteria"
-                  value={formData.criteria}
-                  onChange={handleChange}
-                  rows="3"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                  placeholder="Enter criteria for earning this badge"
-                  required
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="criteriaType" className="block text-sm text-gray-600 mb-1">
+                      Criteria Type
+                    </label>
+                    <select
+                      id="criteriaType"
+                      name="criteriaType"
+                      value={formData.criteria.type}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                      required
+                    >
+                      <option value="">Select criteria type</option>
+                      {criteriaTypes.map(type => (
+                        <option key={type.id} value={type.id}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="criteriaCount" className="block text-sm text-gray-600 mb-1">
+                      Required Count
+                    </label>
+                    <input
+                      type="number"
+                      id="criteriaCount"
+                      name="criteriaCount"
+                      value={formData.criteria.count}
+                      onChange={handleChange}
+                      min="0"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                      placeholder="Enter required count"
+                      required
+                    />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500">
+                  Users will receive this badge when they reach the specified count for the selected criteria.
+                </p>
               </div>
 
               <div className="flex justify-end">
@@ -159,6 +236,48 @@ function CreateBadge() {
           </motion.div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      <AnimatePresence>
+        {showSuccessModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl"
+            >
+              <div className="text-center">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                  <svg
+                    className="h-6 w-6 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Badge Created Successfully!
+                </h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Your new badge has been created and will be available in the badges list.
+                </p>
+                <div className="animate-pulse text-sm text-gray-500">
+                  Redirecting to badges list...
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
