@@ -95,10 +95,10 @@ function Dashboard() {
                   className="flex items-center justify-start space-x-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors group"
                 >
                   <span className="text-2xl">🎨</span>
-                  <span className="font-medium text-green-700 group-hover:text-green-800">Create New</span>
+                  <span className="font-medium text-green-700 group-hover:text-green-800">Create New Post</span>
                 </button>
                 <button 
-                  onClick={() => navigate('/achievements')}
+                  onClick={() => navigate('/profile')}
                   className="flex items-center justify-start space-x-3 p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors group"
                 >
                   <span className="text-2xl">🏆</span>

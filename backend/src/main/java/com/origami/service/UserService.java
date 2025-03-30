@@ -51,15 +51,7 @@ public class UserService {
                 .followers(0)
                 .following(0)
                 .build())
-            .badges(new ArrayList<>(Arrays.asList(
-                Badge.builder()
-                    .id("welcome")
-                    .name("Welcome")
-                    .icon("👋")
-                    .description("Joined Origami World")
-                    .earnedAt(LocalDateTime.now())
-                    .build()
-            )))
+            .badges(new ArrayList<>()) // Initialize with empty badges list
             .role("user") // Set single role string
             .createdAt(LocalDateTime.now())
             .updatedAt(LocalDateTime.now())

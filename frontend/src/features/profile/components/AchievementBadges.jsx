@@ -10,7 +10,6 @@ const AchievementBadges = ({ badges }) => {
 
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-bold mb-6">Achievement Badges</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {badges.map((badge, index) => (
           <motion.div
@@ -18,7 +17,7 @@ const AchievementBadges = ({ badges }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.1 }}
-            className="bg-gradient-to-tl from-blue-100 to-blue-50  rounded-lg p-6 hover:shadow-md transition-all"
+            className="bg-gradient-to-tr from-blue-100 to-violet-50  rounded-lg p-6 hover:shadow-md transition-all"
           >
             <div className="flex flex-col items-center text-center space-y-3">
               <div className="text-4xl mb-2">
