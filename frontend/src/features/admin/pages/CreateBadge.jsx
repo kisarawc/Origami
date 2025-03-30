@@ -20,10 +20,8 @@ function CreateBadge() {
   const criteriaTypes = [
     { id: 'followers', label: 'Follow Count' },
     { id: 'created_tutorials', label: 'Created Tutorials Count' },
-    { id: 'completed_tutorials', label: 'Completed Tutorials Count' },
-    { id: 'likes_received', label: 'Likes Received' },
-    { id: 'comments_made', label: 'Comments Made' },
-    { id: 'days_active', label: 'Days Active' }
+    { id: 'completed_tutorials', label: 'Completed Tutorials Count' }
+
   ];
 
   const handleLogout = () => {

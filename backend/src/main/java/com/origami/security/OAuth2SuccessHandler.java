@@ -64,15 +64,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 .followers(0)
                 .following(0)
                 .build());
-            user.setBadges(new ArrayList<>(Arrays.asList(
-                Badge.builder()
-                    .id("welcome")
-                    .name("Welcome")
-                    .icon("👋")
-                    .description("Joined Origami World")
-                    .earnedAt(LocalDateTime.now())
-                    .build()
-            )));
+            user.setBadges(new ArrayList<>()); // Initialize empty badges list
             user.setCreatedAt(LocalDateTime.now());
             user.setUpdatedAt(LocalDateTime.now());
             user = userRepository.save(user);

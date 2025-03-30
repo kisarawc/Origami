@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
+import AchievementBadges from '../../features/profile/components/AchievementBadges';
 
 function UserProfile() {
   const { username } = useParams();
@@ -356,32 +357,13 @@ function UserProfile() {
         </div>
       </div>
 
-      {/* Badges */}
-      {userData.badges && userData.badges.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Achievements</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {userData.badges.map((badge, index) => (
-                <div
-                  key={index}
-                  className="flex items-center p-3 bg-gray-50 rounded-lg"
-                >
-                  <img
-                    src={badge.icon}
-                    alt={badge.name}
-                    className="w-8 h-8 mr-3"
-                  />
-                  <div>
-                    <div className="font-medium text-gray-900">{badge.name}</div>
-                    <div className="text-sm text-gray-500">{badge.description}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Badges Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg shadow p-6">
+          <AchievementBadges badges={userData.badges || []} />
         </div>
-      )}
+      </div>
+
     </div>
     </div>
     </div>

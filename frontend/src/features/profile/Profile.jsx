@@ -4,6 +4,7 @@ import Header from '../../shared/components/Header';
 import Footer from '../../shared/components/Footer';
 import Modal from '../../shared/components/Modal';
 import { motion } from 'framer-motion';
+import AchievementBadges from './components/AchievementBadges';
 
 function Profile() {
   const navigate = useNavigate();
@@ -293,11 +294,15 @@ function Profile() {
             </div>
           </div>
 
-          {/* Badges Section */}
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Achievement Badges</h2>
-
-          </div>
+          {/* Achievement Badges Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="bg-white rounded-lg shadow-sm p-6"
+          >
+            <AchievementBadges badges={userData?.badges || []} />
+          </motion.div>
 
           {/* Content Tabs */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">

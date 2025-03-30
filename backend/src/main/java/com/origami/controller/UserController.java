@@ -53,7 +53,15 @@ public class UserController {
             @PathVariable String username,
             Authentication authentication) {
         String currentUsername = authentication.getName();
+        
+        // First get the user
         User user = userService.getUserByUsername(username);
+        
+        // Then check and assign badges
+        userService.checkAndAssignBadges(username);
+        
+        // Refresh user data after badge check
+        user = userService.getUserByUsername(username);
         boolean isFollowing = userService.isFollowing(currentUsername, username);
         
         UserProfileResponse response = UserProfileResponse.builder()
