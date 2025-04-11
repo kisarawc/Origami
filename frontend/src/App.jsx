@@ -12,6 +12,7 @@ import logoImage from './assets/logo.png';
 import AdminDashboard from './features/admin/pages/AdminDashboard';
 import CreateBadge from './features/admin/pages/CreateBadge';
 import CurrentBadges from './features/admin/pages/CurrentBadges';
+import Tutorials from './pages/Tutorials';
 
 function Navigation() {
   const navigate = useNavigate();
@@ -132,6 +133,9 @@ function App() {
 
           {/* Redirect root to dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+          {/* Tutorials route */}
+          <Route path="/tutorials/*" element={<Tutorials />} />
         </Routes>
       </div>
     </Router>
