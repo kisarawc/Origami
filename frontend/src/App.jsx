@@ -406,7 +406,7 @@ function Home() {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* Footer
       <footer className="bg-white border-t border-blue-100 py-12">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
@@ -464,7 +464,7 @@ function Home() {
         </p>
       </div>
         </div>
-      </footer>
+      </footer> */}
     </div>
   );
 }
