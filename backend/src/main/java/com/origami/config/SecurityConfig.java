@@ -1,11 +1,10 @@
 package com.origami.config;
 
-import com.origami.security.JwtAuthenticationFilter;
-import com.origami.security.OAuth2SuccessHandler;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import java.util.Arrays;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -21,9 +20,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.http.HttpMethod;
 
-import java.util.Arrays;
+import com.origami.security.JwtAuthenticationFilter;
+import com.origami.security.OAuth2SuccessHandler;
+
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
@@ -55,6 +57,9 @@ public class SecurityConfig {
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/favicon.ico").permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                .requestMatchers("/api/v1/tutorials").permitAll()
+                .requestMatchers("/api/v1/tutorials/{id}").permitAll()
+                .requestMatchers("/api/v1/completed-tutorials/**").authenticated()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
