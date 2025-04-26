@@ -12,5 +12,8 @@ import com.origami.model.Comment;
 public interface CommentRepository extends MongoRepository<Comment, String> {
 
     List<Comment> findByPostId(ObjectId objectId);
+    List<Comment> findByCreatedBy(ObjectId createdBy);
+    List<Comment> findByParentCommentId(ObjectId parentCommentId);
+
     // You can add custom query methods here if needed
 }

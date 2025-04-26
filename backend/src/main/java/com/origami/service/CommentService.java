@@ -10,7 +10,6 @@ import com.origami.exception.CommentNotFoundException;
 import com.origami.model.Comment;
 import com.origami.repository.CommentRepository;
 
-
 @Service
 public class CommentService {
 
@@ -18,15 +17,28 @@ public class CommentService {
     CommentRepository commentRepository;
 
     public Comment createComment(Comment comment) {
-       return commentRepository.save(comment);
+        return commentRepository.save(comment);
     }
 
-    public List<Comment> getAllComment(){
+    public List<Comment> getAllComment() {
         return commentRepository.findAll();
     }
 
     public Comment getCommentById(String id) {
-        return commentRepository.findById(id).orElseThrow(()-> new CommentNotFoundException("Id not found"));
+        return commentRepository.findById(id)
+                .orElseThrow(() -> new CommentNotFoundException("Id not found"));
+    }
+
+    public Comment updateComment(Comment updatedComment) {
+        Comment existingComment = commentRepository.findById(updatedComment.getId())
+                .orElseThrow(() -> new CommentNotFoundException("Comment not found"));
+
+        // Only update the text
+        if (updatedComment.getText() != null) {
+            existingComment.setText(updatedComment.getText());
+        }
+
+        return commentRepository.save(existingComment);
     }
 
     public void deleteComment(String id) {
@@ -36,5 +48,13 @@ public class CommentService {
     public List<Comment> getCommentsByPostId(String postId) {
         return commentRepository.findByPostId(new ObjectId(postId));
     }
-    
+
+    public List<Comment> getCommentsByUserId(ObjectId userId) {
+        return commentRepository.findByCreatedBy(userId);
+    }
+
+    // ✅✅ NEW: Get replies for a given parent comment
+    public List<Comment> getReplies(ObjectId parentCommentId) {
+        return commentRepository.findByParentCommentId(parentCommentId);
+    }
 }

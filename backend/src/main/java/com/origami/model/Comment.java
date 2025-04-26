@@ -21,5 +21,6 @@ public class Comment {
     private ObjectId createdBy;
     private LocalDateTime createdDate;
     private String text;
-    
+
+    private ObjectId parentCommentId; // ✅ NEW: for nested comments (replies)
 }
