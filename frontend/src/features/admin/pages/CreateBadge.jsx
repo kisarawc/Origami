@@ -17,13 +17,10 @@ function CreateBadge() {
     }
   });
 
-  const [iconType, setIconType] = useState('emoji');
-
   const criteriaTypes = [
     { id: 'followers', label: 'Follow Count' },
     { id: 'created_tutorials', label: 'Created Tutorials Count' },
     { id: 'completed_tutorials', label: 'Completed Tutorials Count' }
-
   ];
 
   const handleLogout = () => {
@@ -47,7 +44,6 @@ function CreateBadge() {
 
       if (response.ok) {
         setShowSuccessModal(true);
-        // Navigate after 2 seconds
         setTimeout(() => {
           navigate('/admin/current-badges');
         }, 2000);
@@ -118,7 +114,7 @@ function CreateBadge() {
         </div>
       </header>
 
-      {/* Main Content with padding for fixed header */}
+      {/* Main Content */}
       <div className="pt-24 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -133,21 +129,7 @@ function CreateBadge() {
                 <p className="text-gray-600">Design a new achievement badge for your community</p>
               </div>
               <div className="text-7xl bg-white p-6 rounded-xl shadow-sm ml-8">
-                {formData.icon ? (
-                  iconType === 'url' ? (
-                    <img 
-                      src={formData.icon} 
-                      alt="Badge Icon" 
-                      className="w-24 h-24 object-contain"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = '🏆';
-                      }}
-                    />
-                  ) : (
-                    formData.icon
-                  )
-                ) : '🏆'}
+                {formData.icon || '🏆'}
               </div>
             </div>
 
@@ -171,68 +153,22 @@ function CreateBadge() {
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label htmlFor="icon" className="block text-sm font-semibold text-gray-700">
-                        Badge Icon
-                      </label>
-                      <div className="flex items-center space-x-4">
-                        <button
-                          type="button"
-                          onClick={() => setIconType('emoji')}
-                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
-                            iconType === 'emoji'
-                              ? 'bg-blue-100 text-blue-600'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          Emoji
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setIconType('url')}
-                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
-                            iconType === 'url'
-                              ? 'bg-blue-100 text-blue-600'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          Image URL
-                        </button>
-                      </div>
-                    </div>
-                    <div className="relative">
-                      {iconType === 'emoji' ? (
-                        <input
-                          type="text"
-                          id="icon"
-                          name="icon"
-                          value={formData.icon}
-                          onChange={handleChange}
-                          className="w-full px-6 py-4 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-3xl placeholder-gray-400"
-                          placeholder="🏆"
-                          required
-                        />
-                      ) : (
-                        <input
-                          type="url"
-                          id="icon"
-                          name="icon"
-                          value={formData.icon}
-                          onChange={handleChange}
-                          className="w-full px-6 py-4 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-lg placeholder-gray-400"
-                          placeholder="https://example.com/badge-icon.png"
-                          required
-                        />
-                      )}
-                      <span className="absolute right-6 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
-                        {iconType === 'emoji' ? 'Use emoji' : 'Use image URL'}
-                      </span>
-                    </div>
-                    {iconType === 'url' && (
-                      <p className="mt-2 text-sm text-gray-500">
-                        Provide a direct link to your image. Recommended size: 96x96px
-                      </p>
-                    )}
+                    <label htmlFor="icon" className="block text-sm font-semibold text-gray-700 mb-2">
+                      Badge Icon
+                    </label>
+                    <input
+                      type="text"
+                      id="icon"
+                      name="icon"
+                      value={formData.icon}
+                      onChange={handleChange}
+                      className="w-full px-6 py-4 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-3xl placeholder-gray-400"
+                      placeholder="🏆"
+                      required
+                    />
+                    <p className="mt-2 text-sm text-gray-500">
+                      Use any emoji (e.g., 🏆, 🎖️, 🥇, etc.)
+                    </p>
                   </div>
 
                   <div>
@@ -276,30 +212,25 @@ function CreateBadge() {
                           ))}
                         </select>
                       </div>
-                      
+
                       <div>
                         <label htmlFor="criteriaCount" className="block text-sm font-medium text-gray-700 mb-2">
                           Required Count
                         </label>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            id="criteriaCount"
-                            name="criteriaCount"
-                            value={formData.criteria.count}
-                            onChange={handleChange}
-                            min="0"
-                            className="w-full px-6 py-4 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-lg"
-                            placeholder="Enter milestone number"
-                            required
-                          />
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
-                            <span className="text-gray-500"></span>
-                          </div>
-                        </div>
+                        <input
+                          type="number"
+                          id="criteriaCount"
+                          name="criteriaCount"
+                          value={formData.criteria.count}
+                          onChange={handleChange}
+                          min="0"
+                          className="w-full px-6 py-4 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-lg"
+                          placeholder="Enter milestone number"
+                          required
+                        />
                       </div>
                     </div>
-                    
+
                     <div className="mt-8 p-6 bg-blue-50 rounded-xl">
                       <h4 className="text-base font-semibold text-blue-900 mb-2">How it works</h4>
                       <p className="text-base text-blue-700 leading-relaxed">
@@ -375,4 +306,4 @@ function CreateBadge() {
   );
 }
 
-export default CreateBadge; 
+export default CreateBadge;
