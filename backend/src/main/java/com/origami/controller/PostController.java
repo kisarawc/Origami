@@ -1,47 +1,69 @@
 package com.origami.controller;
 
+import com.origami.dto.PostResponse;
 import com.origami.model.Post;
+import com.origami.model.User;
 import com.origami.service.PostService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.core.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/posts")
+@RequiredArgsConstructor
 public class PostController {
 
-    @Autowired
-    private PostService postService;
+    private final PostService postService;;
 
     @GetMapping
-    public ResponseEntity<List<Post>> getAllPosts() {
-        return new ResponseEntity<>(postService.getAllPosts(), HttpStatus.OK);
+    public ResponseEntity<List<PostResponse>> getAllPosts(Authentication authentication) {
+        String username = authentication.getName();
+        User user = postService.getUserRepository().findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(postService.getAllPosts(user.getId()));
     }
 
     
 
     @GetMapping("/{id}")
-    public ResponseEntity<Post> getPostById(@PathVariable String id) {
-        return new ResponseEntity<>(postService.getPostById(id), HttpStatus.OK);
+    public ResponseEntity<PostResponse> getPostById(@PathVariable String id, Authentication authentication) {
+        String username = authentication.getName();
+        User user = postService.getUserRepository().findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(postService.getPostResponseById(id, user.getId()));
     }
 
-    @PostMapping
-    public ResponseEntity<Post> createPost(@RequestBody Post post) {
-        return new ResponseEntity<>(postService.createPost(post), HttpStatus.CREATED);
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<Post>> getPostsByUserId(@PathVariable String userId) {
+        return ResponseEntity.ok(postService.getPostsByUserId(userId));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Post> updatePost(@PathVariable String id, @RequestBody Post post) {
-        return new ResponseEntity<>(postService.updatePost(id, post), HttpStatus.OK);
+    @PostMapping("/upload")
+    public ResponseEntity<Post> createPostWithMedia(
+            @RequestParam String title,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) List<MultipartFile> images,
+            @RequestParam(required = false) MultipartFile video,
+            Authentication authentication
+    )throws IOException {
+        String username = authentication.getName();
+        Post createdPost = postService.createPostWithMedia(username, title, description, images, video);
+        return ResponseEntity.ok(createdPost);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable String id) {
-        postService.deletePost(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
+   
+
+    @GetMapping("/media/{id}")
+    public ResponseEntity<?> getMedia(@PathVariable String id) {
+        return postService.getMediaById(id);
+     }
+
 } 
 
