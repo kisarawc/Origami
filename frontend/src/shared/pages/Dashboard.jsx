@@ -3,11 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import FollowRequests from '../components/FollowRequests';
+import PostForm from '../../features/posts/PostForm';
+import Modal from '../components/Modal';
+
+
 
 function Dashboard() {
   const navigate = useNavigate();
   const [username, setUsername] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showPostForm, setShowPostForm] = useState(false);
+
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -54,6 +60,11 @@ function Dashboard() {
     navigate('/login');
   };
 
+  const handlePostCreated = (newPost) => {
+    setShowPostForm(false);
+    setReloadFeed(prev => !prev); 
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -91,7 +102,7 @@ function Dashboard() {
                   <span className="font-medium text-blue-700 group-hover:text-blue-800">Browse Tutorials</span>
                 </button>
                 <button 
-                  onClick={() => navigate('/create')}
+                  onClick={() =>  setShowPostForm(true)}
                   className="flex items-center justify-start space-x-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors group"
                 >
                   <span className="text-2xl">🎨</span>
@@ -157,6 +168,15 @@ function Dashboard() {
 
     </div>
       <Footer />
+
+      {/* Post Form Modal */}
+      <Modal
+        isOpen={showPostForm}
+        onClose={() => setShowPostForm(false)}
+        title="Create New Post"
+      >
+        <PostForm onSubmit={handlePostCreated} />
+      </Modal>
     </div>
   );
 }
