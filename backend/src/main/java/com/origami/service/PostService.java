@@ -72,7 +72,6 @@ public class PostService {
         return userRepository;
     }
 
-
     
     public Post getPostById(String id) {
         return postRepository.findById(id)
@@ -146,6 +145,44 @@ public class PostService {
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body("Failed to load media: " + e.getMessage());
         }
+    }
+
+    public Post updatePostWithMedia(String id, String title, String description, List<MultipartFile> images, MultipartFile video) {
+        Post existingPost = getPostById(id);
+    
+        existingPost.setTitle(title);
+        existingPost.setDescription(description);
+        existingPost.setUpdatedAt(new Date());
+    
+        try {
+            // If new images are uploaded, replace old images and remove video
+            if (images != null && !images.isEmpty()) {
+                if (images.size() > 3) {
+                    throw new RuntimeException("Cannot upload more than 3 images.");
+                }
+    
+                List<String> newImageUrls = new ArrayList<>();
+                for (MultipartFile image : images) {
+                    var fileId = gridFsTemplate.store(image.getInputStream(), image.getOriginalFilename(), image.getContentType());
+                    newImageUrls.add("http://localhost:8081/api/v1/posts/media/" + fileId.toString());
+                }
+    
+                existingPost.setImageUrls(newImageUrls);
+                existingPost.setVideoUrl(null); // remove video if images are uploaded
+            }
+    
+            // If new video is uploaded, replace old video and remove images
+            if (video != null) {
+                var videoId = gridFsTemplate.store(video.getInputStream(), video.getOriginalFilename(), video.getContentType());
+                existingPost.setVideoUrl("http://localhost:8081/api/v1/posts/media/" + videoId.toString());
+                existingPost.setImageUrls(new ArrayList<>()); // remove images if video is uploaded
+            }
+    
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to update media files.", e);
+        }
+    
+        return postRepository.save(existingPost);
     }
 
     public void deletePost(String id) {

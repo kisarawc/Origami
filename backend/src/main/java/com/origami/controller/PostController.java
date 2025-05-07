@@ -65,5 +65,24 @@ public class PostController {
         return postService.getMediaById(id);
      }
 
+     
+     @PutMapping("/{id}")
+    public ResponseEntity<Post> updatePostWithMedia(
+            @PathVariable String id,
+            @RequestParam String title,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) List<MultipartFile> images,
+            @RequestParam(required = false) MultipartFile video
+    ) {
+        Post updatedPost = postService.updatePostWithMedia(id, title, description, images, video);
+        return ResponseEntity.ok(updatedPost);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePost(@PathVariable String id) {
+        postService.deletePost(id);
+        return ResponseEntity.noContent().build();
+    }
+
 } 
 
