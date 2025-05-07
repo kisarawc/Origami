@@ -55,6 +55,7 @@ public class SecurityConfig {
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/favicon.ico").permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                .requestMatchers("/api/v1/posts/media/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import FollowRequests from '../components/FollowRequests';
 import PostForm from '../../features/posts/PostForm';
 import Modal from '../components/Modal';
+import Feed from '../../features/posts/Feed';
 
 
 
@@ -13,7 +14,7 @@ function Dashboard() {
   const [username, setUsername] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showPostForm, setShowPostForm] = useState(false);
-
+  const [reloadFeed, setReloadFeed] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -119,10 +120,13 @@ function Dashboard() {
             </div>
 
             {/* Posts Feed */}
-            <div className="space-y-4 text-7xl">
-              <div className="bg-white rounded-lg h-screen shadow-sm p-6"></div>
+            <div className="space-y-4">
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Posts</h2>
+                  <Feed reload={reloadFeed} /> {/* 🔥 pass reload prop */}
+                </div>
+              </div>
             </div>
-          </div>
 
           {/* Right Column - Sidebar (Fixed) */}
           <div className="lg:w-80 flex-shrink-0">
