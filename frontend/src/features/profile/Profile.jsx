@@ -1,9 +1,86 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Header from '../../shared/components/Header';
 import Footer from '../../shared/components/Footer';
 import Modal from '../../shared/components/Modal';
 import { motion } from 'framer-motion';
+
+// Format the date - handle both ISO string and MongoDB LocalDateTime format
+const formatDate = (dateString) => {
+  if (!dateString) return 'Unknown date';
+
+  // Directly check for the problematic date format
+  if (dateString === '0-01-01 00:00:00') {
+    return 'Recently';
+  }
+
+  try {
+    // For debugging
+    console.log('Date input:', typeof dateString, dateString);
+
+    // Parse the date string
+    let date;
+
+    // Handle array format from Java LocalDateTime
+    if (Array.isArray(dateString)) {
+      // Format: [year, month, day, hour, minute, second, nano]
+      const [year, month, day, hour, minute, second] = dateString;
+      // Note: month in JavaScript Date is 0-indexed, but Java's is 1-indexed
+      date = new Date(year, month - 1, day, hour, minute, second);
+    }
+    // Handle object format from Java LocalDateTime
+    else if (typeof dateString === 'object' && dateString !== null && !Array.isArray(dateString)) {
+      const year = dateString.year || 0;
+      const month = dateString.monthValue || 1;
+      const day = dateString.dayOfMonth || 1;
+      const hour = dateString.hour || 0;
+      const minute = dateString.minute || 0;
+      const second = dateString.second || 0;
+
+      // Month is 0-indexed in JavaScript Date
+      date = new Date(year, month - 1, day, hour, minute, second);
+    }
+    // Handle ISO format strings with timezone like "2025-05-09T16:11:15.622+00:00"
+    else if (typeof dateString === 'string' && dateString.includes('T') && dateString.includes('+')) {
+      date = new Date(dateString);
+    }
+    // Handle ISO format strings
+    else if (typeof dateString === 'string' && (dateString.includes('T') || dateString.includes('Z'))) {
+      date = new Date(dateString);
+    }
+    // Handle format like "2023-06-15 14:30:00"
+    else if (typeof dateString === 'string' && dateString.includes('-') && dateString.includes(':')) {
+      date = new Date(dateString.replace(' ', 'T') + 'Z');
+    }
+    // Handle invalid date format like "0-01-01 00:00:00" or any date starting with "0-"
+    else if (typeof dateString === 'string' && dateString.startsWith('0-')) {
+      // Use "Recently" as fallback for invalid dates
+      return 'Recently';
+    }
+    else {
+      // Try direct parsing as last resort
+      date = new Date(dateString);
+    }
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid date');
+    }
+
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString(undefined, options);
+  } catch (error) {
+    console.error('Error formatting date:', error, dateString);
+
+    // For debugging
+    if (typeof dateString === 'object') {
+      console.log('Date object:', JSON.stringify(dateString));
+    }
+
+    // Return a reasonable fallback
+    return 'Recently';
+  }
+};
 
 function Profile() {
   const navigate = useNavigate();
@@ -23,6 +100,8 @@ function Profile() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [validationErrors, setValidationErrors] = useState({});
+  const [tutorials, setTutorials] = useState([]);
+  const [loadingTutorials, setLoadingTutorials] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -33,6 +112,13 @@ function Profile() {
 
     fetchUserProfile();
   }, [navigate]);
+
+  // Effect to fetch tutorials when the active tab changes to 'tutorials'
+  useEffect(() => {
+    if (activeTab === 'tutorials') {
+      fetchUserTutorials();
+    }
+  }, [activeTab, navigate]);
 
   const fetchUserProfile = async () => {
     try {
@@ -64,9 +150,38 @@ function Profile() {
     }
   };
 
+  const fetchUserTutorials = async () => {
+    try {
+      setLoadingTutorials(true);
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const response = await fetch('http://localhost:8081/api/v1/tutorials/my-tutorials', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTutorials(data);
+      } else {
+        console.error('Failed to fetch tutorials');
+      }
+    } catch (err) {
+      console.error('Error fetching tutorials:', err);
+    } finally {
+      setLoadingTutorials(false);
+    }
+  };
+
   const validateForm = () => {
     const errors = {};
-    
+
     // Username validation
     if (!editFormData.username.trim()) {
       errors.username = 'Username is required';
@@ -271,7 +386,17 @@ function Profile() {
                 </p>
               </div>
               <div className="flex space-x-3">
-                <button 
+                <Link
+                  to={`/profile/${userData.username}`}
+                  className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  View Public Profile
+                </Link>
+                <button
                   onClick={() => setIsEditModalOpen(true)}
                   className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center"
                 >
@@ -280,7 +405,7 @@ function Profile() {
                   </svg>
                   Edit Profile
                 </button>
-                <button 
+                <button
                   onClick={() => setIsDeleteModalOpen(true)}
                   className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center"
                 >
@@ -335,7 +460,7 @@ function Profile() {
                 </button>
               </div>
             </div>
-            
+
             <div className="p-6">
               {activeTab === 'creations' && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -345,13 +470,97 @@ function Profile() {
                   </div>
                 </div>
               )}
-              
+
               {activeTab === 'tutorials' && (
-                <div className="text-center text-gray-500">
-                  No tutorials created yet
+                <div>
+                  {loadingTutorials ? (
+                    <div className="flex justify-center items-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    </div>
+                  ) : tutorials.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {tutorials.map(tutorial => (
+                        <div
+                          key={tutorial.id}
+                          className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+                        >
+                          <Link to={`/tutorials/${tutorial.id}`}>
+                            <div className="relative aspect-video bg-gray-100">
+                              {tutorial.finalImage ? (
+                                <img
+                                  src={tutorial.finalImage}
+                                  alt={tutorial.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex items-center justify-center h-full bg-gray-200">
+                                  <span className="text-gray-400">No image</span>
+                                </div>
+                              )}
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                                <span className="inline-block px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                                  {tutorial.difficulty}
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                          <div className="p-4">
+                            <Link to={`/tutorials/${tutorial.id}`}>
+                              <h3 className="font-bold text-lg mb-1 text-gray-900 hover:text-blue-600 transition-colors">{tutorial.title}</h3>
+                            </Link>
+                            <p className="text-gray-600 text-sm line-clamp-2">{tutorial.description}</p>
+                            <div className="mt-3 flex items-center justify-between">
+                              <div className="flex items-center text-sm text-gray-500">
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {tutorial.stepImages?.length || 0} steps
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {formatDate(tutorial.createdAt)}
+                              </div>
+                            </div>
+                            <div className="mt-4 flex justify-between items-center">
+                              {tutorial.authorUsername !== userData.username && (
+                                <Link
+                                  to={`/profile/${tutorial.authorUsername}`}
+                                  className="text-sm text-blue-500 hover:text-blue-700 transition-colors"
+                                >
+                                  View Author
+                                </Link>
+                              )}
+                              <Link
+                                to={`/tutorials/${tutorial.id}`}
+                                className={`px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors ${tutorial.authorUsername === userData.username ? 'ml-auto' : ''}`}
+                              >
+                                View Tutorial
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">No Tutorials Created Yet</h3>
+                      <p className="text-gray-500 mb-6">You haven't created any origami tutorials yet.</p>
+                      <Link
+                        to="/tutorials/create"
+                        className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                      >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Create Your First Tutorial
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
-              
+
               {activeTab === 'saved' && (
                 <div className="text-center text-gray-500">
                   No saved items yet
@@ -575,4 +784,4 @@ function Profile() {
   );
 }
 
-export default Profile; 
+export default Profile;
