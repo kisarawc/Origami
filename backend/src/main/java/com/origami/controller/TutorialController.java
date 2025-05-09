@@ -77,4 +77,18 @@ public class TutorialController {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(tutorialService.findByAuthorUsername(username));
     }
-} 
+
+    @GetMapping("/user/{username}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<Tutorial>> getTutorialsByUsername(@PathVariable String username) {
+        try {
+            logger.info("Fetching tutorials for user: {}", username);
+            List<Tutorial> tutorials = tutorialService.findByAuthorUsername(username);
+            logger.info("Found {} tutorials for user {}", tutorials.size(), username);
+            return ResponseEntity.ok(tutorials);
+        } catch (Exception e) {
+            logger.error("Error fetching tutorials for user {}: {}", username, e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+}
