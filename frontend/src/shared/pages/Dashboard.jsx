@@ -240,14 +240,6 @@ function Dashboard() {
             </div>
              
 
-              {/* Suggested Users */}
-              <section className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Suggested to Follow</h2>
-                <div className="space-y-4">
-                  {/* Add suggested users content */}
-                </div>
-              </section>
-
               {/* Quick Links */}
               <section className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h2>
