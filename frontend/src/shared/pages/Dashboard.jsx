@@ -21,6 +21,17 @@ const samplePosts = [
     createdAt: "2025-04-24T15:16:58.603+00:00",
     updatedAt: "2025-04-24T15:19:49.376+00:00"
   },
+  ,
+  {
+    _id: "681b47e47150774f25a646fb",
+    title: "Elegant Origami Crane Display",
+    description: "Folding this crane felt peaceful and meaningful😊. Each crease brought a sense of calm, and seeing it take shape reminded me why I love paper art",
+    imageUrls: [OrigamiFish1, OrigamiFish2],
+    userId: "67ff9acbc9de7b3b152363dd",
+    userName: "Tharushi",
+    createdAt: "2025-05-07T11:45:40.155+00:00",
+    updatedAt: "2025-05-07T11:45:40.155+00:00"
+  },
   {
     _id: "680a5b8e87f7e260a9d2ae76",
     title: "Simple Origami Fish",

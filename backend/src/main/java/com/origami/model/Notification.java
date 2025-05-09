@@ -24,6 +24,7 @@ public class Notification {
     private String type;            // e.g. "comment", "like", etc.
     private String message;
     private ObjectId postId;        // Related post (optional)
+    private ObjectId commentId;
     
     private Boolean read;           // ✅ status: read/unread
     private Date createdDate;
