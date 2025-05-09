@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, Link } from 'react-router-dom';
 import Login from './features/auth/pages/Login';
@@ -13,6 +13,8 @@ import AdminDashboard from './features/admin/pages/AdminDashboard';
 import CreateBadge from './features/admin/pages/CreateBadge';
 import CurrentBadges from './features/admin/pages/CurrentBadges';
 import Tutorials from './pages/Tutorials';
+import CompletionPost from './components/CompletionPost';
+import { postService } from './services/postService';
 
 function Navigation() {
   const navigate = useNavigate();
@@ -145,7 +147,7 @@ function App() {
 // Protected Route component
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
-  
+
   if (!token) {
     return <Navigate to="/login" replace />;
   }
@@ -190,7 +192,7 @@ function Home() {
 
         {/* Decorative Elements */}
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-10"></div>
-        
+
         {/* Floating Origami Elements */}
         <motion.div
           className="absolute w-40 h-40 bg-blue-100/70 rounded-lg backdrop-blur-sm"
@@ -236,7 +238,7 @@ function Home() {
             </span>
           </motion.div>
 
-          <motion.h1 
+          <motion.h1
             className="text-7xl md:text-9xl font-bold mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -248,7 +250,7 @@ function Home() {
             </span>
           </motion.h1>
 
-          <motion.p 
+          <motion.p
             className="text-xl md:text-2xl text-gray-600 mb-12 max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -263,14 +265,14 @@ function Home() {
             transition={{ duration: 0.8, delay: 0.6 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <button 
+            <button
               onClick={handleStartCreating}
               className="group relative px-8 py-4 bg-blue-500 text-white rounded-lg text-lg font-medium overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300"
             >
               <span className="relative z-10">Start Creating</span>
               <div className="absolute inset-0 bg-blue-600 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
             </button>
-            <button 
+            <button
               onClick={handleExploreTutorials}
               className="group px-8 py-4 bg-white border border-blue-100 rounded-lg text-lg font-medium text-blue-600 hover:bg-blue-50 transition-all duration-300 shadow-md hover:shadow-lg"
             >
@@ -280,7 +282,7 @@ function Home() {
         </div>
 
         {/* Scroll Indicator */}
-        <motion.div 
+        <motion.div
           className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
           animate={{
             y: [0, 8, 0]
@@ -319,24 +321,24 @@ function Home() {
               </p>
             </motion.div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {[
-              { 
+              {
                 title: 'Beginner',
                 count: '20+ tutorials',
                 icon: '🌱',
                 description: 'Perfect for those just starting their origami journey',
                 color: 'from-blue-400 to-blue-500'
               },
-              { 
+              {
                 title: 'Intermediate',
                 count: '35+ tutorials',
                 icon: '🌿',
                 description: 'Take your skills to the next level with more complex designs',
                 color: 'from-blue-500 to-blue-600'
               },
-              { 
+              {
                 title: 'Advanced',
                 count: '15+ tutorials',
                 icon: '🌳',
@@ -394,7 +396,7 @@ function Home() {
                 Join thousands of origami enthusiasts and start creating beautiful paper art today
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button 
+                <button
                   onClick={handleJoinFree}
                   className="group relative px-8 py-4 bg-blue-500 text-white rounded-lg text-lg font-medium overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300"
                 >
@@ -417,10 +419,10 @@ function Home() {
       <div>
               <div className="flex items-center space-x-3 mb-8">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <img 
-                    src={logoImage} 
-                    alt="Origami Logo" 
-                    className="w-8 h-8 object-contain invert" 
+                  <img
+                    src={logoImage}
+                    alt="Origami Logo"
+                    className="w-8 h-8 object-contain invert"
                     style={{ filter: 'brightness(0) invert(1)' }}
                   />
                 </div>
