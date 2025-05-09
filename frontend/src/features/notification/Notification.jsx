@@ -193,14 +193,11 @@ const Notification = ({ onClose }) => {
             >
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
-                  <div className="relative">
-                    <img
-                      src={notification.followerAvatar || 'https://via.placeholder.com/32'}
-                      alt={notification.followerUsername}
-                      className="w-16 h-16 rounded-xl border-2 border-gray-200 group-hover:border-blue-200 transition-all duration-200"
-                    />
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white"></div>
-                  </div>
+                  <img
+                    src={notification.followerAvatar || 'https://via.placeholder.com/32'}
+                    alt={notification.followerUsername}
+                    className="w-16 h-16 rounded-xl border-2 border-gray-200 group-hover:border-blue-200 transition-all duration-200"
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className={`text-lg ${!readStatus[notification.id] ? 'font-bold' : 'text-gray-900'}`}>
