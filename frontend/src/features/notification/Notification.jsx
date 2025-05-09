@@ -90,6 +90,15 @@ const Notification = ({ onClose }) => {
     setReadStatus(allRead);
   };
 
+  const handleViewAll = () => {
+    // Mark all notifications as read before navigating
+    markAllAsRead();
+    // Close the notification panel
+    onClose();
+    // Navigate to dashboard
+    navigate('/dashboard');
+  };
+
   if (loading) {
     return (
       <div className="fixed right-0 top-0 w-1/3 h-screen bg-gradient-to-b from-white to-gray-50 shadow-2xl border-l border-gray-200">
@@ -229,7 +238,7 @@ const Notification = ({ onClose }) => {
       {/* Footer */}
       <div className="sticky bottom-0 bg-white/80 backdrop-blur-lg border-t border-gray-200 px-8 py-6">
         <button 
-          onClick={() => navigate('/dashboard')}
+          onClick={handleViewAll}
           className="w-full text-center text-base text-white bg-blue-600 hover:bg-blue-700 font-medium py-3 px-6 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
         >
           <span>View All in Dashboard</span>
