@@ -1,6 +1,83 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+// Format the date - handle both ISO string and MongoDB LocalDateTime format
+const formatDate = (dateString) => {
+  if (!dateString) return 'Unknown date';
+
+  // Directly check for the problematic date format
+  if (dateString === '0-01-01 00:00:00') {
+    return 'Recently';
+  }
+
+  try {
+    // For debugging
+    console.log('Date input:', typeof dateString, dateString);
+
+    // Parse the date string
+    let date;
+
+    // Handle array format from Java LocalDateTime
+    if (Array.isArray(dateString)) {
+      // Format: [year, month, day, hour, minute, second, nano]
+      const [year, month, day, hour, minute, second] = dateString;
+      // Note: month in JavaScript Date is 0-indexed, but Java's is 1-indexed
+      date = new Date(year, month - 1, day, hour, minute, second);
+    }
+    // Handle object format from Java LocalDateTime
+    else if (typeof dateString === 'object' && dateString !== null && !Array.isArray(dateString)) {
+      const year = dateString.year || 0;
+      const month = dateString.monthValue || 1;
+      const day = dateString.dayOfMonth || 1;
+      const hour = dateString.hour || 0;
+      const minute = dateString.minute || 0;
+      const second = dateString.second || 0;
+
+      // Month is 0-indexed in JavaScript Date
+      date = new Date(year, month - 1, day, hour, minute, second);
+    }
+    // Handle ISO format strings with timezone like "2025-05-09T16:11:15.622+00:00"
+    else if (typeof dateString === 'string' && dateString.includes('T') && dateString.includes('+')) {
+      date = new Date(dateString);
+    }
+    // Handle ISO format strings
+    else if (typeof dateString === 'string' && (dateString.includes('T') || dateString.includes('Z'))) {
+      date = new Date(dateString);
+    }
+    // Handle format like "2023-06-15 14:30:00"
+    else if (typeof dateString === 'string' && dateString.includes('-') && dateString.includes(':')) {
+      date = new Date(dateString.replace(' ', 'T') + 'Z');
+    }
+    // Handle invalid date format like "0-01-01 00:00:00" or any date starting with "0-"
+    else if (typeof dateString === 'string' && dateString.startsWith('0-')) {
+      // Use "Recently" as fallback for invalid dates
+      return 'Recently';
+    }
+    else {
+      // Try direct parsing as last resort
+      date = new Date(dateString);
+    }
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid date');
+    }
+
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString(undefined, options);
+  } catch (error) {
+    console.error('Error formatting date:', error, dateString);
+
+    // For debugging
+    if (typeof dateString === 'object') {
+      console.log('Date object:', JSON.stringify(dateString));
+    }
+
+    // Return a reasonable fallback
+    return 'Recently';
+  }
+};
+
 const MyTutorials = () => {
   const navigate = useNavigate();
   const [tutorials, setTutorials] = useState([]);
@@ -125,8 +202,8 @@ const MyTutorials = () => {
       <h2 className="text-2xl font-bold text-gray-800 mb-6">My Tutorials</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {tutorials.map((tutorial) => (
-          <div 
-            key={tutorial.id} 
+          <div
+            key={tutorial.id}
             className="bg-white rounded-xl shadow-lg overflow-hidden group cursor-pointer"
             onClick={() => handleTutorialClick(tutorial)}
           >
@@ -171,7 +248,7 @@ const MyTutorials = () => {
                   {tutorial.stepImages.length} steps
                 </span>
                 <span className="text-sm text-gray-500">
-                  {new Date(tutorial.createdAt).toLocaleDateString()}
+                  {formatDate(tutorial.createdAt)}
                 </span>
               </div>
             </div>
@@ -284,4 +361,4 @@ const MyTutorials = () => {
   );
 };
 
-export default MyTutorials; 
+export default MyTutorials;
