@@ -10,7 +10,9 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder
@@ -35,4 +37,7 @@ public class Post {
     
     @LastModifiedDate
     private Date updatedAt;
+
+    @Builder.Default
+    private Set<String> likedUserIds = new HashSet<>();
 }  

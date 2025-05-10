@@ -18,5 +18,6 @@ public class PostResponse {
     private Date createdAt;
     private Date updatedAt;
 
-    
+    private int likeCount;
+    private boolean likedByCurrentUser;
 }

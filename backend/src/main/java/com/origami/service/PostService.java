@@ -34,6 +34,24 @@ public class PostService {
     private final GridFsOperations gridFsOperations;
 
 
+    // --- Like feature ---
+    public Post likePost(String postId, String userId) {
+        Post post = getPostById(postId);
+        if (post.getLikedUserIds() == null) {
+            post.setLikedUserIds(new HashSet<>());
+        }
+        boolean added = post.getLikedUserIds().add(userId);
+        if (!added) {
+            // Already liked, so unlike
+            post.getLikedUserIds().remove(userId);
+        }
+        return postRepository.save(post);
+    }
+
+    private boolean isLikedByUser(Post post, String userId) {
+        return post.getLikedUserIds() != null && post.getLikedUserIds().contains(userId);
+    }
+
     public List<PostResponse> getAllPosts(String currentUserId) {
         List<Post> posts = postRepository.findAll();
         return posts.stream().map(post -> {
@@ -48,6 +66,8 @@ public class PostService {
                     .avatarUrl(user != null ? user.getAvatarUrl() : "")
                     .createdAt(post.getCreatedAt())
                     .updatedAt(post.getUpdatedAt())
+                    .likeCount(post.getLikedUserIds() != null ? post.getLikedUserIds().size() : 0)
+                    .likedByCurrentUser(isLikedByUser(post, currentUserId))
                     .build();
         }).collect(Collectors.toList());
     }
@@ -65,6 +85,8 @@ public class PostService {
                 .avatarUrl(user != null ? user.getAvatarUrl() : "")
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
+                .likeCount(post.getLikedUserIds() != null ? post.getLikedUserIds().size() : 0)
+                .likedByCurrentUser(isLikedByUser(post, currentUserId))
                 .build();
     }
 

@@ -28,6 +28,16 @@ const Feed = ({ reload }) => {
     }
   };
 
+  const handlePostUpdate = (updatedPost) => {
+    setPosts(posts.map(post => 
+      post.id === updatedPost.id ? updatedPost : post
+    ));
+  };
+
+  const handlePostDelete = (postId) => {
+    setPosts(posts.filter(post => post.id !== postId));
+  };
+
   return (
     <div className="flex flex-col items-center px-4 py-6 space-y-8">
       {error && (
@@ -42,7 +52,12 @@ const Feed = ({ reload }) => {
         </div>
       ) : (
         posts.map((post) => (
-          <PostCard key={post.id} post={post} />
+          <PostCard
+            key={post.id}
+            post={post}
+            onPostUpdate={handlePostUpdate}
+            onPostDelete={handlePostDelete}
+          />
         ))
       )}
     </div>

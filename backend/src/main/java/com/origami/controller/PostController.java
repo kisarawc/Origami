@@ -20,7 +20,21 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostController {
 
-    private final PostService postService;;
+    private final PostService postService;
+
+    @PostMapping("/{id}/like")
+    public ResponseEntity<PostResponse> likePost(
+            @PathVariable String id,
+            Authentication authentication
+    ) {
+        String username = authentication.getName();
+        User user = postService.getUserRepository().findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        postService.likePost(id, user.getId());
+        return ResponseEntity.ok(postService.getPostResponseById(id, user.getId()));
+    }
+
+    
 
     @GetMapping
     public ResponseEntity<List<PostResponse>> getAllPosts(Authentication authentication) {
@@ -84,5 +98,6 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
+    
 } 
 
