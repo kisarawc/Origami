@@ -1,41 +1,27 @@
 import React, { useState, useRef } from 'react';
 import { HeartIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
-import {
-  EllipsisHorizontalIcon,
-  PencilIcon,
-  TrashIcon,
-  XMarkIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from '@heroicons/react/24/outline';
+import { EllipsisHorizontalIcon, PencilIcon, TrashIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import Modal from '../../shared/components/Modal';
 import PostForm from './PostForm';
-import CommentSection from '../../features/comment/comment';
 import { useNavigate } from 'react-router-dom';
+import CommentSection from '../../features/comment/comment';
 
-const PostCard = ({
-  post,
-  onPostUpdate,
-  onPostDelete,
-  isDetailView = false,
-  deleting = false,
-  enableNavigation = false,
-}) => {
+
+const PostCard = ({ post, onPostUpdate, onPostDelete, isDetailView = false, deleting = false, enableNavigation = false }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [likeLoading, setLikeLoading] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const fileInputRef = useRef(null);
-  const navigate = useNavigate();
-
   const currentUsername = localStorage.getItem('username');
   const isOwner = post.userName === currentUsername;
+  const fileInputRef = useRef(null);
+  const [likeLoading, setLikeLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const navigate = useNavigate();
 
   const handleLike = async () => {
     setLikeLoading(true);
@@ -48,9 +34,109 @@ const PostCard = ({
       );
       if (onPostUpdate) onPostUpdate(response.data);
     } catch (err) {
-      // Handle error optionally
+      // Optionally show error
     } finally {
       setLikeLoading(false);
+    }
+  };
+
+  const handleMediaTypeChange = (type) => {
+    setEditForm(prev => ({
+      ...prev,
+      mediaType: type,
+      images: [],
+      video: null
+    }));
+  };
+
+  const handleStartEdit = () => {
+    setEditForm({
+      title: post.title,
+      description: post.description,
+      mediaType: post.videoUrl ? 'video' : 'images',
+      images: post.imageUrls ? [...post.imageUrls] : [],
+      video: null
+    });
+    setShowEditModal(true);
+  };
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    const currentImages = editForm.images || [];
+    if (currentImages.length + files.length > 3) {
+      setError('You can only upload up to 3 images');
+      return;
+    }
+    setEditForm(prev => ({
+      ...prev,
+      images: [...currentImages, ...files]
+    }));
+    setError('');
+  };
+
+  const handleVideoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const videoElement = document.createElement('video');
+    videoElement.preload = 'metadata';
+    videoElement.onloadedmetadata = () => {
+      window.URL.revokeObjectURL(videoElement.src);
+      if (videoElement.duration > 30) {
+        setError('Video must be 30 seconds or less');
+        setEditForm(prev => ({ ...prev, video: null }));
+      } else {
+        setEditForm(prev => ({ ...prev, video: file }));
+        setError('');
+      }
+    };
+    videoElement.src = URL.createObjectURL(file);
+  };
+
+  const handleRemoveImage = (idx) => {
+    setEditForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== idx)
+    }));
+  };
+
+  const handleEdit = async (e) => {
+    e.preventDefault();
+    setIsUploading(true);
+    setError('');
+
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('title', editForm.title);
+      formData.append('description', editForm.description);
+
+      if (editForm.mediaType === 'images') {
+        const keptUrls = editForm.images.filter(img => typeof img === 'string');
+        const newFiles = editForm.images.filter(img => typeof img !== 'string');
+        keptUrls.forEach(url => formData.append('keptImageUrls', url));
+        newFiles.forEach(file => formData.append('images', file));
+      } else if (editForm.mediaType === 'video' && editForm.video) {
+        formData.append('video', editForm.video);
+      }
+
+      const response = await axios.put(
+        `http://localhost:8081/api/v1/posts/${post.id}`,
+        formData,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+      onPostUpdate(response.data);
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Failed to update post:', error);
+      setError(error.response?.data?.message || 'Failed to update post');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -59,64 +145,109 @@ const PostCard = ({
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`http://localhost:8081/api/v1/posts/${post.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` }
       });
-      if (onPostDelete) onPostDelete(post.id);
-    } catch (err) {
-      setError('Failed to delete post');
+      onPostDelete(post.id);
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error('Failed to delete post:', error);
     } finally {
       setIsDeleting(false);
-      setShowDeleteModal(false);
     }
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const removeMedia = () => {
+    setEditForm(prev => ({
+      ...prev,
+      images: [],
+      video: null
+    }));
+  };
+
+  const nextImage = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === post.imageUrls.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === 0 ? post.imageUrls.length - 1 : prevIndex - 1
+    );
+  };
+
+  // Helper to get all media (images or video)
+  const getMediaArray = () => {
+    if (post.imageUrls && post.imageUrls.length > 0) return post.imageUrls;
+    if (post.videoUrl) return [post.videoUrl];
+    return [];
+  };
+  const mediaArray = getMediaArray();
+  const isVideo = (url) => url === post.videoUrl;
+
+  const handlePostClick = () => {
+    if (enableNavigation && !isDetailView && !deleting) {
+      navigate(`/post/${post.id}`);
+    }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 mb-4 w-full max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="text-2xl">👤</div>
+    <div 
+      className={`bg-white rounded-xl shadow-sm overflow-hidden ${!isDetailView ? 'cursor-pointer hover:shadow-md transition-shadow' : ''} w-full max-w-[500px] mx-auto`}
+      onClick={handlePostClick}
+      style={deleting ? { pointerEvents: 'none', opacity: 0.5 } : {}}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-100">
+        <div className="flex items-center gap-3">
+          <img
+            src={post.avatarUrl || '/default-avatar.png'}
+            alt={post.userName}
+            className="w-10 h-10 rounded-full object-cover"
+          />
           <div>
-            <p className="font-semibold">{post.userName}</p>
-            <p className="text-sm text-gray-500">{formatDate(post.createdAt)}</p>
+            <p className="font-semibold text-gray-900 text-sm">{post.userName}</p>
+            <p className="text-xs text-gray-500">
+              {post.updatedAt && post.updatedAt !== post.createdAt
+                ? ` ${new Date(post.updatedAt).toLocaleDateString()}`
+                : new Date(post.createdAt).toLocaleDateString()}
+            </p>
           </div>
         </div>
         {isOwner && (
           <div className="relative">
-            <button onClick={() => setShowMenu((prev) => !prev)}>
-              <EllipsisHorizontalIcon className="w-5 h-5 text-gray-500" />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <EllipsisHorizontalIcon className="h-5 w-5 text-gray-500" />
             </button>
             {showMenu && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow-lg z-10">
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setShowEditModal(true);
                     setShowMenu(false);
                   }}
-                  className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100"
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                 >
-                  <PencilIcon className="w-4 h-4 mr-2" />
-                  Edit
+                  <PencilIcon className="h-4 w-4 mr-2" />
+                  Edit Post
                 </button>
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setShowDeleteModal(true);
                     setShowMenu(false);
                   }}
-                  className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 flex items-center"
                 >
-                  <TrashIcon className="w-4 h-4 mr-2" />
-                  Delete
+                  <TrashIcon className="h-4 w-4 mr-2" />
+                  Delete Post
                 </button>
               </div>
             )}
@@ -124,77 +255,15 @@ const PostCard = ({
         )}
       </div>
 
-      <h3 className="text-xl font-semibold mb-2">{post.title}</h3>
-
-      {post.description && (
-        <p className="mb-4 text-gray-700">{post.description}</p>
-      )}
-
-      {post.imageUrls && post.imageUrls.length > 0 && (
-        <div className="relative mb-4">
-          <img
-            src={post.imageUrls[currentImageIndex]}
-            alt={`Post image ${currentImageIndex + 1}`}
-            className="w-full h-64 object-cover rounded-lg"
-          />
-          {post.imageUrls.length > 1 && (
-            <>
-              <button
-                onClick={() =>
-                  setCurrentImageIndex((prev) =>
-                    prev === 0 ? post.imageUrls.length - 1 : prev - 1
-                  )
-                }
-                className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-1"
-              >
-                <ChevronLeftIcon className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() =>
-                  setCurrentImageIndex((prev) =>
-                    prev === post.imageUrls.length - 1 ? 0 : prev + 1
-                  )
-                }
-                className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-1"
-              >
-                <ChevronRightIcon className="w-5 h-5" />
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      <div className="flex items-center space-x-4 mb-4">
-        <button
-          onClick={handleLike}
-          disabled={likeLoading}
-          className={`flex items-center space-x-1 ${post.likedByCurrentUser ? 'text-red-500' : 'text-gray-500'}`}
-        >
-          {post.likedByCurrentUser ? (
-            <HeartIconSolid className="w-5 h-5" />
-          ) : (
-            <HeartIcon className="w-5 h-5" />
-          )}
-          <span>{post.likeCount}</span>
-        </button>
-        <button
-          onClick={() => setShowComments((prev) => !prev)}
-          className="flex items-center space-x-1 text-gray-500"
-        >
-          💬 <span>Comments</span>
-        </button>
-      </div>
-
-      {showComments && <CommentSection postId={post.id} />}
-
-      {/* Edit Modal */}
-      <Modal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        title="Edit Post"
-      >
+      {/* Edit Form */}
+      <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="Edit Post">
         <PostForm
-          post={post}
+          mode="edit"
+          postId={post.id}
+          initialTitle={post.title}
+          initialDescription={post.description}
+          initialImages={post.imageUrls}
+          initialVideo={post.videoUrl}
           onSubmit={(updatedPost) => {
             onPostUpdate(updatedPost);
             setShowEditModal(false);
@@ -203,30 +272,86 @@ const PostCard = ({
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        title="Confirm Delete"
-      >
-        <div className="p-4">
-          <p>Are you sure you want to delete this post?</p>
-          <div className="mt-4 flex justify-end space-x-2">
+      <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Delete Post">
+        <div className="text-center p-4">
+          <p className="mb-4 text-gray-700">Are you sure you want to delete this post? This action cannot be undone.</p>
+          <div className="flex justify-center gap-4">
             <button
               onClick={() => setShowDeleteModal(false)}
-              className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200"
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
             >
               Cancel
             </button>
             <button
               onClick={handleDelete}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
               disabled={isDeleting}
-              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
             </button>
           </div>
         </div>
       </Modal>
+
+      {/* Media Display (Slider) */}
+      {!showEditModal && mediaArray.length > 0 && (
+        <div className="w-full aspect-square relative overflow-hidden bg-gray-100">
+          {isVideo(mediaArray[currentImageIndex]) ? (
+            <video
+              src={mediaArray[currentImageIndex]}
+              controls
+              className="w-full h-full object-contain"
+              style={{ display: 'block' }}
+            />
+          ) : (
+            <img
+              src={mediaArray[currentImageIndex]}
+              alt="Post"
+              className="w-full h-full object-contain"
+              style={{ display: 'block' }}
+            />
+          )}
+          {mediaArray.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  prevImage();
+                }}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10"
+              >
+                <ChevronLeftIcon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nextImage();
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10"
+              >
+                <ChevronRightIcon className="h-4 w-4" />
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Title and Description */}
+      {!showEditModal && (
+        <div className="px-4 pt-3 pb-2 border-b border-gray-100">
+          <h2 className="text-base font-semibold text-gray-900 line-clamp-2">{post.title}</h2>
+          {post.description && (
+            <p className="text-sm text-gray-700 mt-1 line-clamp-3">{post.description}</p>
+          )}
+        </div>
+      )}
+
+      {/* Actions */}
+      {!showEditModal && (
+    <div className="px-4 pb-4">
+    <CommentSection postId={post.id} />
+  </div>
+      )}
     </div>
   );
 };
