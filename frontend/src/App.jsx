@@ -15,9 +15,6 @@ import CurrentBadges from './features/admin/pages/CurrentBadges';
 import Tutorials from './pages/Tutorials';
 import CompletionPost from './components/CompletionPost';
 import { postService } from './services/postService';
-import MyCreations from './features/profile/pages/MyCreations';
-import PostDetail from './features/posts/pages/PostDetail';
-
 
 function Navigation() {
   const navigate = useNavigate();
@@ -132,23 +129,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <UserProfile />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/my-creations"
-            element={
-              <ProtectedRoute>
-                <MyCreations />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/post/:id"
-            element={
-              <ProtectedRoute>
-                <PostDetail />
               </ProtectedRoute>
             }
           />

@@ -62,7 +62,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/tutorials").permitAll()
                 .requestMatchers("/api/v1/tutorials/{id}").permitAll()
                 .requestMatchers("/api/v1/completed-tutorials/**").authenticated()
-                .requestMatchers("/api/v1/posts/media/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
