@@ -6,6 +6,8 @@ import axios from 'axios';
 import Modal from '../../shared/components/Modal';
 import PostForm from './PostForm';
 import { useNavigate } from 'react-router-dom';
+import CommentSection from '../../features/comment/comment';
+
 
 const PostCard = ({ post, onPostUpdate, onPostDelete, isDetailView = false, deleting = false, enableNavigation = false }) => {
   const [showMenu, setShowMenu] = useState(false);
@@ -346,29 +348,9 @@ const PostCard = ({ post, onPostUpdate, onPostDelete, isDetailView = false, dele
 
       {/* Actions */}
       {!showEditModal && (
-        <div className="px-4 py-3 flex items-center gap-6">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleLike();
-            }}
-            disabled={likeLoading}
-            className={`flex items-center gap-1 text-gray-600 hover:text-red-500 transition ${likeLoading ? 'opacity-50' : ''}`}
-          >
-            {post.likedByCurrentUser ? (
-              <HeartIconSolid className="h-6 w-6 text-red-500" />
-            ) : (
-              <HeartIcon className="h-6 w-6" />
-            )}
-            <span className="text-sm">{post.likeCount}</span>
-          </button>
-          <div className="flex items-center gap-1 text-gray-600">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <span className="text-sm">{post.comments || 0}</span>
-          </div>
-        </div>
+    <div className="px-4 pb-4">
+    <CommentSection postId={post.id} />
+  </div>
       )}
     </div>
   );
