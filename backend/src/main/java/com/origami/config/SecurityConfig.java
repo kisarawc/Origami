@@ -54,7 +54,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/api/notifications/**").permitAll() // ✅ ALLOW public access to notifications
+                .requestMatchers("/api/notifications/**").permitAll() 
                 .requestMatchers("/comments/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/favicon.ico").permitAll()
@@ -62,6 +62,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/tutorials").permitAll()
                 .requestMatchers("/api/v1/tutorials/{id}").permitAll()
                 .requestMatchers("/api/v1/completed-tutorials/**").authenticated()
+                .requestMatchers("/api/v1/posts/media/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
