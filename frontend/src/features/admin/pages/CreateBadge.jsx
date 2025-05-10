@@ -1,17 +1,30 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import logoImage from '../../../assets/logo.png';
 
 function CreateBadge() {
   const navigate = useNavigate();
   const username = localStorage.getItem('username');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     icon: '',
     description: '',
-    criteria: ''
+    criteria: {
+      type: '',
+      count: 0
+    }
   });
+
+  const [iconType, setIconType] = useState('emoji');
+
+  const criteriaTypes = [
+    { id: 'followers', label: 'Follow Count' },
+    { id: 'created_tutorials', label: 'Created Tutorials Count' },
+    { id: 'completed_tutorials', label: 'Completed Tutorials Count' }
+
+  ];
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -22,15 +35,48 @@ function CreateBadge() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implement badge creation logic
-    console.log('Creating badge:', formData);
+    try {
+      const response = await fetch('http://localhost:8081/api/v1/badges', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        setShowSuccessModal(true);
+        // Navigate after 2 seconds
+        setTimeout(() => {
+          navigate('/admin/current-badges');
+        }, 2000);
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to create badge');
+      }
+    } catch (error) {
+      console.error('Error creating badge:', error);
+      alert('Failed to create badge');
+    }
   };
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    if (name === 'criteriaType' || name === 'criteriaCount') {
+      setFormData(prev => ({
+        ...prev,
+        criteria: {
+          ...prev.criteria,
+          [name === 'criteriaType' ? 'type' : 'count']: name === 'criteriaCount' ? parseInt(value) : value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   return (
@@ -74,83 +120,207 @@ function CreateBadge() {
 
       {/* Main Content with padding for fixed header */}
       <div className="pt-24 pb-8">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="bg-white rounded-lg shadow-lg p-6"
+            className="bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-2xl shadow-lg p-8"
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Create New Badge</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Badge Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                  placeholder="Enter badge name"
-                  required
-                />
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex-1">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Create New Badge</h2>
+                <p className="text-gray-600">Design a new achievement badge for your community</p>
+              </div>
+              <div className="text-7xl bg-white p-6 rounded-xl shadow-sm ml-8">
+                {formData.icon ? (
+                  iconType === 'url' ? (
+                    <img 
+                      src={formData.icon} 
+                      alt="Badge Icon" 
+                      className="w-24 h-24 object-contain"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '🏆';
+                      }}
+                    />
+                  ) : (
+                    formData.icon
+                  )
+                ) : '🏆'}
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div className="space-y-8">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
+                      Badge Name
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="w-full px-6 py-4 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-gray-800 placeholder-gray-400 text-lg"
+                      placeholder="e.g., Master Creator"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label htmlFor="icon" className="block text-sm font-semibold text-gray-700">
+                        Badge Icon
+                      </label>
+                      <div className="flex items-center space-x-4">
+                        <button
+                          type="button"
+                          onClick={() => setIconType('emoji')}
+                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
+                            iconType === 'emoji'
+                              ? 'bg-blue-100 text-blue-600'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          Emoji
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIconType('url')}
+                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
+                            iconType === 'url'
+                              ? 'bg-blue-100 text-blue-600'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          Image URL
+                        </button>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      {iconType === 'emoji' ? (
+                        <input
+                          type="text"
+                          id="icon"
+                          name="icon"
+                          value={formData.icon}
+                          onChange={handleChange}
+                          className="w-full px-6 py-4 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-3xl placeholder-gray-400"
+                          placeholder="🏆"
+                          required
+                        />
+                      ) : (
+                        <input
+                          type="url"
+                          id="icon"
+                          name="icon"
+                          value={formData.icon}
+                          onChange={handleChange}
+                          className="w-full px-6 py-4 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-lg placeholder-gray-400"
+                          placeholder="https://example.com/badge-icon.png"
+                          required
+                        />
+                      )}
+                      <span className="absolute right-6 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
+                        {iconType === 'emoji' ? 'Use emoji' : 'Use image URL'}
+                      </span>
+                    </div>
+                    {iconType === 'url' && (
+                      <p className="mt-2 text-sm text-gray-500">
+                        Provide a direct link to your image. Recommended size: 96x96px
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="description" className="block text-sm font-semibold text-gray-700 mb-2">
+                      Description
+                    </label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows="5"
+                      className="w-full px-6 py-4 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-gray-800 placeholder-gray-400 resize-none text-lg"
+                      placeholder="Describe what this badge represents and how to earn it..."
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-8 shadow-sm space-y-8 border border-gray-100">
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-6">Award Criteria</h3>
+                    <div className="space-y-6">
+                      <div>
+                        <label htmlFor="criteriaType" className="block text-sm font-medium text-gray-700 mb-2">
+                          Achievement Type
+                        </label>
+                        <select
+                          id="criteriaType"
+                          name="criteriaType"
+                          value={formData.criteria.type}
+                          onChange={handleChange}
+                          className="w-full px-6 py-4 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-lg"
+                          required
+                        >
+                          <option value="">Select achievement type</option>
+                          {criteriaTypes.map(type => (
+                            <option key={type.id} value={type.id}>
+                              {type.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="criteriaCount" className="block text-sm font-medium text-gray-700 mb-2">
+                          Required Count
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            id="criteriaCount"
+                            name="criteriaCount"
+                            value={formData.criteria.count}
+                            onChange={handleChange}
+                            min="0"
+                            className="w-full px-6 py-4 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-lg"
+                            placeholder="Enter milestone number"
+                            required
+                          />
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
+                            <span className="text-gray-500"></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-8 p-6 bg-blue-50 rounded-xl">
+                      <h4 className="text-base font-semibold text-blue-900 mb-2">How it works</h4>
+                      <p className="text-base text-blue-700 leading-relaxed">
+                        Users will automatically receive this badge when they reach the specified milestone for the selected achievement type.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label htmlFor="icon" className="block text-sm font-medium text-gray-700 mb-1">
-                  Badge Icon (emoji)
-                </label>
-                <input
-                  type="text"
-                  id="icon"
-                  name="icon"
-                  value={formData.icon}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                  placeholder="Enter emoji icon (e.g., 🏆)"
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows="3"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                  placeholder="Enter badge description"
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="criteria" className="block text-sm font-medium text-gray-700 mb-1">
-                  Award Criteria
-                </label>
-                <textarea
-                  id="criteria"
-                  name="criteria"
-                  value={formData.criteria}
-                  onChange={handleChange}
-                  rows="3"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                  placeholder="Enter criteria for earning this badge"
-                  required
-                />
-              </div>
-
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between pt-8 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => navigate('/admin/current-badges')}
+                  className="text-gray-600 hover:text-gray-800 font-medium transition-colors text-lg"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
-                  className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                  className="bg-blue-500 text-white px-12 py-4 rounded-xl hover:bg-blue-600 transition-all transform hover:scale-105 hover:shadow-md font-medium text-lg"
                 >
                   Create Badge
                 </button>
@@ -159,6 +329,48 @@ function CreateBadge() {
           </motion.div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      <AnimatePresence>
+        {showSuccessModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl"
+            >
+              <div className="text-center">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                  <svg
+                    className="h-6 w-6 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Badge Created Successfully!
+                </h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Your new badge has been created and will be available in the badges list.
+                </p>
+                <div className="animate-pulse text-sm text-gray-500">
+                  Redirecting to badges list...
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

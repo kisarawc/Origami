@@ -1,23 +1,35 @@
 package com.origami.controller;
 
-import com.origami.model.User;
-import com.origami.service.UserService;
-import com.origami.dto.UserProfileResponse;
-import com.origami.dto.UserSearchResponse;
-import com.origami.security.JwtService;
-import com.origami.model.FollowRequest;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
-import java.util.stream.Collectors;
+
+import com.origami.dto.UserProfileResponse;
+import com.origami.dto.UserSearchResponse;
+import com.origami.model.FollowRequest;
+import com.origami.model.User;
+import com.origami.security.JwtService;
+import com.origami.service.UserService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -53,7 +65,15 @@ public class UserController {
             @PathVariable String username,
             Authentication authentication) {
         String currentUsername = authentication.getName();
+        
+        // First get the user
         User user = userService.getUserByUsername(username);
+        
+        // Then check and assign badges
+        userService.checkAndAssignBadges(username);
+        
+        // Refresh user data after badge check
+        user = userService.getUserByUsername(username);
         boolean isFollowing = userService.isFollowing(currentUsername, username);
         
         UserProfileResponse response = UserProfileResponse.builder()

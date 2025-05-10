@@ -63,7 +63,7 @@ public class AuthController {
                 return ResponseEntity.status(403).body("Invalid token format");
             }
 
-            String token = authHeader.substring(7);
+            String  token = authHeader.substring(7);
             String username = jwtService.extractUsername(token);
             
             if (username != null && userRepository.findByUsername(username).isPresent()) {
