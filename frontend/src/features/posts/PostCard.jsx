@@ -21,6 +21,7 @@ const PostCard = ({ post, onPostUpdate, onPostDelete, isDetailView = false, dele
   const fileInputRef = useRef(null);
   const [likeLoading, setLikeLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const navigate = useNavigate();
 
   const handleLike = async () => {
@@ -293,7 +294,7 @@ const PostCard = ({ post, onPostUpdate, onPostDelete, isDetailView = false, dele
         </div>
       </Modal>
 
-      {/* Media Display (Slider) */}
+      {/* Media Display */}
       {!showEditModal && mediaArray.length > 0 && (
         <div className="w-full aspect-square relative overflow-hidden bg-gray-100">
           {isVideo(mediaArray[currentImageIndex]) ? (
@@ -336,22 +337,69 @@ const PostCard = ({ post, onPostUpdate, onPostDelete, isDetailView = false, dele
         </div>
       )}
 
-      {/* Title and Description */}
-      {!showEditModal && (
-        <div className="px-4 pt-3 pb-2 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900 line-clamp-2">{post.title}</h2>
-          {post.description && (
-            <p className="text-sm text-gray-700 mt-1 line-clamp-3">{post.description}</p>
+      <div className="flex items-center space-x-4 mb-4 mt-3 mx-2">
+        <button
+          onClick={handleLike}
+          disabled={likeLoading}
+          className={`flex items-center space-x-1 ${post.likedByCurrentUser ? 'text-red-500' : 'text-gray-500'}`}
+        >
+          {post.likedByCurrentUser ? (
+            <HeartIconSolid className="w-5 h-5" />
+          ) : (
+            <HeartIcon className="w-5 h-5" />
           )}
-        </div>
-      )}
+          <span>{post.likeCount}</span>
+        </button>
+        <button
+          onClick={() => setShowComments((prev) => !prev)}
+          className="flex items-center space-x-1 text-gray-500"
+        >
+          💬 <span>Comments</span>
+        </button>
+      </div>
 
-      {/* Actions */}
-      {!showEditModal && (
-    <div className="px-4 pb-4">
-    <CommentSection postId={post.id} />
-  </div>
-      )}
+      {showComments && <CommentSection postId={post.id} />}
+
+      {/* Edit Modal */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit Post"
+      >
+        <PostForm
+          post={post}
+          onSubmit={(updatedPost) => {
+            onPostUpdate(updatedPost);
+            setShowEditModal(false);
+          }}
+        />
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Confirm Delete"
+      >
+        <div className="p-4">
+          <p>Are you sure you want to delete this post?</p>
+          <div className="mt-4 flex justify-end space-x-2">
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
