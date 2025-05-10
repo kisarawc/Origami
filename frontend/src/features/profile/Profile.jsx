@@ -5,6 +5,7 @@ import Footer from '../../shared/components/Footer';
 import Modal from '../../shared/components/Modal';
 import { motion } from 'framer-motion';
 import AchievementBadges from './components/AchievementBadges';
+import MyCreations from './components/MyCreations';
 
 function Profile() {
   const navigate = useNavigate();
@@ -367,19 +368,7 @@ function Profile() {
             </div>
             
             <div className="p-8">
-              {activeTab === 'creations' && (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  <div className="aspect-square bg-gradient-to-br from-gray-50 to-white rounded-xl flex items-center justify-center text-gray-400 border border-gray-100 hover:shadow-md transition-all">
-                    <div className="text-center">
-                      <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                      <p className="text-gray-500 font-medium">No creations yet</p>
-                      <p className="text-sm text-gray-400 mt-1">Start creating!</p>
-                    </div>
-                  </div>
-                </div>
-              )}
+             {activeTab === 'creations' && <MyCreations />}
               
               {activeTab === 'tutorials' && (
                 <div className="text-center py-12">

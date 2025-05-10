@@ -7,7 +7,6 @@ import com.origami.service.PostService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.core.Authentication;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +21,7 @@ public class PostController {
 
     private final PostService postService;
 
+    // --- Like endpoint ---
     @PostMapping("/{id}/like")
     public ResponseEntity<PostResponse> likePost(
             @PathVariable String id,
@@ -34,8 +34,7 @@ public class PostController {
         return ResponseEntity.ok(postService.getPostResponseById(id, user.getId()));
     }
 
-    
-
+    // --- Updated to include like info ---
     @GetMapping
     public ResponseEntity<List<PostResponse>> getAllPosts(Authentication authentication) {
         String username = authentication.getName();
@@ -44,8 +43,6 @@ public class PostController {
         return ResponseEntity.ok(postService.getAllPosts(user.getId()));
     }
 
-    
-
     @GetMapping("/{id}")
     public ResponseEntity<PostResponse> getPostById(@PathVariable String id, Authentication authentication) {
         String username = authentication.getName();
@@ -53,6 +50,9 @@ public class PostController {
             .orElseThrow(() -> new RuntimeException("User not found"));
         return ResponseEntity.ok(postService.getPostResponseById(id, user.getId()));
     }
+
+    // ... rest of your existing endpoints (create, update, delete, media, etc.) ...
+
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Post>> getPostsByUserId(@PathVariable String userId) {
@@ -72,15 +72,7 @@ public class PostController {
         return ResponseEntity.ok(createdPost);
     }
 
-   
-
-    @GetMapping("/media/{id}")
-    public ResponseEntity<?> getMedia(@PathVariable String id) {
-        return postService.getMediaById(id);
-     }
-
-     
-     @PutMapping("/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<Post> updatePostWithMedia(
             @PathVariable String id,
             @RequestParam String title,
@@ -98,6 +90,8 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
-    
-} 
-
+    @GetMapping("/media/{id}")
+    public ResponseEntity<?> getMedia(@PathVariable String id) {
+        return postService.getMediaById(id);
+    }
+}

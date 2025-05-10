@@ -5,6 +5,7 @@ import PostCard from './PostCard';
 const Feed = ({ reload }) => {
   const [posts, setPosts] = useState([]);
   const [error, setError] = useState('');
+  const [deletingPostIds, setDeletingPostIds] = useState([]);
 
   useEffect(() => {
     fetchPosts();
@@ -35,7 +36,11 @@ const Feed = ({ reload }) => {
   };
 
   const handlePostDelete = (postId) => {
-    setPosts(posts.filter(post => post.id !== postId));
+    setDeletingPostIds(ids => [...ids, postId]);
+    setTimeout(() => {
+      setPosts(posts => posts.filter(post => post.id !== postId));
+      setDeletingPostIds(ids => ids.filter(id => id !== postId));
+    }, 500); // Small delay to allow UI feedback
   };
 
   return (
@@ -45,18 +50,20 @@ const Feed = ({ reload }) => {
           {error}
         </div>
       )}
-      {posts.length === 0 ? (
+      {posts.filter(post => !deletingPostIds.includes(post.id)).length === 0 ? (
         <div className="w-full max-w-[500px] text-center py-12">
           <p className="text-gray-500 text-lg">No posts available</p>
           <p className="text-gray-400 text-sm mt-2">Be the first to share something!</p>
         </div>
       ) : (
-        posts.map((post) => (
+        posts.filter(post => !deletingPostIds.includes(post.id)).map((post) => (
           <PostCard
             key={post.id}
             post={post}
             onPostUpdate={handlePostUpdate}
-            onPostDelete={handlePostDelete}
+            onPostDelete={() => handlePostDelete(post.id)}
+            deleting={deletingPostIds.includes(post.id)}
+            enableNavigation={false}
           />
         ))
       )}

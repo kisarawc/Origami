@@ -5,8 +5,9 @@ import { EllipsisHorizontalIcon, PencilIcon, TrashIcon, XMarkIcon, ChevronLeftIc
 import axios from 'axios';
 import Modal from '../../shared/components/Modal';
 import PostForm from './PostForm';
+import { useNavigate } from 'react-router-dom';
 
-const PostCard = ({ post, onPostUpdate, onPostDelete }) => {
+const PostCard = ({ post, onPostUpdate, onPostDelete, isDetailView = false, deleting = false, enableNavigation = false }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -18,6 +19,7 @@ const PostCard = ({ post, onPostUpdate, onPostDelete }) => {
   const fileInputRef = useRef(null);
   const [likeLoading, setLikeLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const navigate = useNavigate();
 
   const handleLike = async () => {
     setLikeLoading(true);
@@ -181,18 +183,28 @@ const PostCard = ({ post, onPostUpdate, onPostDelete }) => {
   const mediaArray = getMediaArray();
   const isVideo = (url) => url === post.videoUrl;
 
+  const handlePostClick = () => {
+    if (enableNavigation && !isDetailView && !deleting) {
+      navigate(`/post/${post.id}`);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 w-full max-w-[500px] mx-auto relative">
+    <div 
+      className={`bg-white rounded-xl shadow-sm overflow-hidden ${!isDetailView ? 'cursor-pointer hover:shadow-md transition-shadow' : ''} w-full max-w-[500px] mx-auto`}
+      onClick={handlePostClick}
+      style={deleting ? { pointerEvents: 'none', opacity: 0.5 } : {}}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between p-4">
+      <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <img
             src={post.avatarUrl || '/default-avatar.png'}
             alt={post.userName}
             className="w-10 h-10 rounded-full object-cover"
           />
-        <div>
-          <p className="font-semibold text-gray-900 text-sm">{post.userName}</p>
+          <div>
+            <p className="font-semibold text-gray-900 text-sm">{post.userName}</p>
             <p className="text-xs text-gray-500">
               {post.updatedAt && post.updatedAt !== post.createdAt
                 ? ` ${new Date(post.updatedAt).toLocaleDateString()}`
@@ -203,7 +215,10 @@ const PostCard = ({ post, onPostUpdate, onPostDelete }) => {
         {isOwner && (
           <div className="relative">
             <button
-              onClick={() => setShowMenu(!showMenu)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             >
               <EllipsisHorizontalIcon className="h-5 w-5 text-gray-500" />
@@ -211,7 +226,8 @@ const PostCard = ({ post, onPostUpdate, onPostDelete }) => {
             {showMenu && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setShowEditModal(true);
                     setShowMenu(false);
                   }}
@@ -221,7 +237,8 @@ const PostCard = ({ post, onPostUpdate, onPostDelete }) => {
                   Edit Post
                 </button>
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setShowDeleteModal(true);
                     setShowMenu(false);
                   }}
@@ -271,72 +288,87 @@ const PostCard = ({ post, onPostUpdate, onPostDelete }) => {
               {isDeleting ? 'Deleting...' : 'Delete'}
             </button>
           </div>
-      </div>
+        </div>
       </Modal>
 
       {/* Media Display (Slider) */}
       {!showEditModal && mediaArray.length > 0 && (
-        <div className="w-full h-[400px] relative overflow-hidden">
+        <div className="w-full aspect-square relative overflow-hidden bg-gray-100">
           {isVideo(mediaArray[currentImageIndex]) ? (
-        <video
+            <video
               src={mediaArray[currentImageIndex]}
-          controls
-              className="w-full h-full object-cover"
+              controls
+              className="w-full h-full object-contain"
               style={{ display: 'block' }}
             />
           ) : (
             <img
               src={mediaArray[currentImageIndex]}
               alt="Post"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               style={{ display: 'block' }}
             />
           )}
           {mediaArray.length > 1 && (
-          <button
-          onClick={nextImage}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10"
-          >
-            <ChevronRightIcon className="h-4 w-4" />
-          </button>
-        )}
-
-          
-  </div>
-)}
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  prevImage();
+                }}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10"
+              >
+                <ChevronLeftIcon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nextImage();
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10"
+              >
+                <ChevronRightIcon className="h-4 w-4" />
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Title and Description */}
       {!showEditModal && (
-      <div className="px-4 pt-3 pb-2">
-          <h2 className="text-base font-semibold text-gray-900">{post.title}</h2>
-        {post.description && (
-          <p className="text-sm text-gray-700 mt-1">{post.description}</p>
-        )}
-      </div>
+        <div className="px-4 pt-3 pb-2 border-b border-gray-100">
+          <h2 className="text-base font-semibold text-gray-900 line-clamp-2">{post.title}</h2>
+          {post.description && (
+            <p className="text-sm text-gray-700 mt-1 line-clamp-3">{post.description}</p>
+          )}
+        </div>
       )}
 
       {/* Actions */}
       {!showEditModal && (
-        <div className="px-4 py-3 flex items-center gap-6 border-t border-gray-100">
+        <div className="px-4 py-3 flex items-center gap-6">
           <button
-            onClick={handleLike}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleLike();
+            }}
             disabled={likeLoading}
             className={`flex items-center gap-1 text-gray-600 hover:text-red-500 transition ${likeLoading ? 'opacity-50' : ''}`}
           >
             {post.likedByCurrentUser ? (
-            <HeartIconSolid className="h-6 w-6 text-red-500" />
-          ) : (
-            <HeartIcon className="h-6 w-6" />
-          )}
+              <HeartIconSolid className="h-6 w-6 text-red-500" />
+            ) : (
+              <HeartIcon className="h-6 w-6" />
+            )}
             <span className="text-sm">{post.likeCount}</span>
-        </button>
+          </button>
           <div className="flex items-center gap-1 text-gray-600">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-          <span className="text-sm">{post.comments || 0}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <span className="text-sm">{post.comments || 0}</span>
           </div>
-      </div>
+        </div>
       )}
     </div>
   );

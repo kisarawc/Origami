@@ -18,11 +18,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +33,11 @@ public class PostService {
     private final GridFsTemplate gridFsTemplate;
     private final GridFsOperations gridFsOperations;
 
+    @Value("${app.media.base-url:http://localhost:8081}")
+    private String mediaBaseUrl;
+
+    @Value("${app.media.api-path:/api/v1/posts/media/}")
+    private String mediaApiPath;
 
     // --- Like feature ---
     public Post likePost(String postId, String userId) {
@@ -71,7 +76,7 @@ public class PostService {
                     .build();
         }).collect(Collectors.toList());
     }
-   
+
     public PostResponse getPostResponseById(String id, String currentUserId) {
         Post post = getPostById(id);
         User user = userRepository.findById(post.getUserId()).orElse(null);
@@ -90,11 +95,14 @@ public class PostService {
                 .build();
     }
 
+    // Add a getter for userRepository if needed in controller
     public UserRepository getUserRepository() {
         return userRepository;
     }
 
-    
+    // ... rest of your existing methods (create, update, delete, media, etc.) ...
+
+
     public Post getPostById(String id) {
         return postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
@@ -119,13 +127,13 @@ public class PostService {
                 }
                 for (MultipartFile image : images) {
                     var fileId = gridFsTemplate.store(image.getInputStream(), image.getOriginalFilename(), image.getContentType());
-                    imageUrls.add("http://localhost:8081/api/v1/posts/media/" + fileId.toString());
+                    imageUrls.add(mediaBaseUrl + mediaApiPath + fileId.toString());
                 }
             }
 
             if (video != null) {
                 var videoId = gridFsTemplate.store(video.getInputStream(), video.getOriginalFilename(), video.getContentType());
-                videoUrl = "http://localhost:8081/api/v1/posts/media/" + videoId.toString();
+                videoUrl = mediaBaseUrl + mediaApiPath + videoId.toString();
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to upload media files.", e);
@@ -144,6 +152,49 @@ public class PostService {
                 .build();
 
         return postRepository.save(post);
+    }
+
+    public Post updatePostWithMedia(String id, String title, String description, List<MultipartFile> images, MultipartFile video) {
+        Post existingPost = getPostById(id);
+    
+        existingPost.setTitle(title);
+        existingPost.setDescription(description);
+        existingPost.setUpdatedAt(new Date());
+    
+        try {
+            // If new images are uploaded, replace old images and remove video
+            if (images != null && !images.isEmpty()) {
+                if (images.size() > 3) {
+                    throw new RuntimeException("Cannot upload more than 3 images.");
+                }
+    
+                List<String> newImageUrls = new ArrayList<>();
+                for (MultipartFile image : images) {
+                    var fileId = gridFsTemplate.store(image.getInputStream(), image.getOriginalFilename(), image.getContentType());
+                    newImageUrls.add(mediaBaseUrl + mediaApiPath + fileId.toString());
+                }
+    
+                existingPost.setImageUrls(newImageUrls);
+                existingPost.setVideoUrl(null); // remove video if images are uploaded
+            }
+    
+            // If new video is uploaded, replace old video and remove images
+            if (video != null) {
+                var videoId = gridFsTemplate.store(video.getInputStream(), video.getOriginalFilename(), video.getContentType());
+                existingPost.setVideoUrl(mediaBaseUrl + mediaApiPath + videoId.toString());
+                existingPost.setImageUrls(new ArrayList<>()); // remove images if video is uploaded
+            }
+    
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to update media files.", e);
+        }
+    
+        return postRepository.save(existingPost);
+    }
+    
+
+    public void deletePost(String id) {
+        postRepository.deleteById(id);
     }
 
     public ResponseEntity<?> getMediaById(String id) {
@@ -168,47 +219,4 @@ public class PostService {
             return ResponseEntity.internalServerError().body("Failed to load media: " + e.getMessage());
         }
     }
-
-    public Post updatePostWithMedia(String id, String title, String description, List<MultipartFile> images, MultipartFile video) {
-        Post existingPost = getPostById(id);
-    
-        existingPost.setTitle(title);
-        existingPost.setDescription(description);
-        existingPost.setUpdatedAt(new Date());
-    
-        try {
-            // If new images are uploaded, replace old images and remove video
-            if (images != null && !images.isEmpty()) {
-                if (images.size() > 3) {
-                    throw new RuntimeException("Cannot upload more than 3 images.");
-                }
-    
-                List<String> newImageUrls = new ArrayList<>();
-                for (MultipartFile image : images) {
-                    var fileId = gridFsTemplate.store(image.getInputStream(), image.getOriginalFilename(), image.getContentType());
-                    newImageUrls.add("http://localhost:8081/api/v1/posts/media/" + fileId.toString());
-                }
-    
-                existingPost.setImageUrls(newImageUrls);
-                existingPost.setVideoUrl(null); // remove video if images are uploaded
-            }
-    
-            // If new video is uploaded, replace old video and remove images
-            if (video != null) {
-                var videoId = gridFsTemplate.store(video.getInputStream(), video.getOriginalFilename(), video.getContentType());
-                existingPost.setVideoUrl("http://localhost:8081/api/v1/posts/media/" + videoId.toString());
-                existingPost.setImageUrls(new ArrayList<>()); // remove images if video is uploaded
-            }
-    
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to update media files.", e);
-        }
-    
-        return postRepository.save(existingPost);
-    }
-
-    public void deletePost(String id) {
-        postRepository.deleteById(id);
-    }
-} 
-
+}
