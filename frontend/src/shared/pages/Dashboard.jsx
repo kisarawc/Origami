@@ -3,137 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import FollowRequests from '../components/FollowRequests';
-import CompletionPost from '../../components/CompletionPost';
-import { postService } from '../../services/postService';
-import CommentSection from '../../features/comment/comment';
-import OrigamiButterfly from '../../assets/Origami_butterfly.jpg';
-import OrigamiButterfly2 from '../../assets/Origami_butterfly2.jpg';
-import OrigamiFish1 from '../../assets/Origami_Fish1.jpg';
-import OrigamiFish2 from '../../assets/Origami_Fish2.jpg';
+import PostForm from '../../features/posts/PostForm';
+import Modal from '../components/Modal';
+import Feed from '../../features/posts/Feed';
 
-// Updated post data with actual posts
-const samplePosts = [
-  {
-    _id: "680a55ea87f7e260a9d2ae75",
-    title: "Origami Butterfly",
-    description: "Today I just created a beautiful Origami Butterfly successfully",
-    imageUrls: [OrigamiButterfly, OrigamiButterfly2],
-    userId: "67eacc8ffdda7b765ca3ff43",
-    userName: "esandiabeysinghe",
-    createdAt: "2025-04-24T15:16:58.603+00:00",
-    updatedAt: "2025-04-24T15:19:49.376+00:00"
-  },
-  {
-    _id: "681b47e47150774f25a646fb",
-    title: "Elegant Origami Crane Display",
-    description: "Folding this crane felt peaceful and meaningful😊. Each crease brought a sense of calm, and seeing it take shape reminded me why I love paper art",
-    imageUrls: [OrigamiFish1, OrigamiFish2],
-    userId: "67ff9acbc9de7b3b152363dd",
-    userName: "Tharushi",
-    createdAt: "2025-05-07T11:45:40.155+00:00",
-    updatedAt: "2025-05-07T11:45:40.155+00:00"
-  },
-  {
-    _id: "680a5b8e87f7e260a9d2ae76",
-    title: "Simple Origami Fish",
-    description: "A step-by-step guide to making an easy origami fish",
-    imageUrls: [OrigamiFish1, OrigamiFish2],
-    userId: "67eacc8ffdda7b765ca3ff43",
-    userName: "esandiabeysinghe",
-    createdAt: "2025-04-24T15:41:02.886+00:00",
-    updatedAt: "2025-04-24T15:42:37.296+00:00"
-  }
-];
 
-// Post component
-const Post = ({ post }) => {
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const [showComments, setShowComments] = useState(false);
-
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  return (
-    <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
-      <div className="flex items-center space-x-3 mb-4">
-        <div className="text-2xl">👤</div>
-        <div>
-          <p className="font-semibold">{post.userName}</p>
-          <p className="text-sm text-gray-500">{formatDate(post.createdAt)}</p>
-        </div>
-      </div>
-
-      <h3 className="text-xl font-semibold mb-2">{post.title}</h3>
-
-      {post.description && (
-        <p className="mb-4 text-gray-700">{post.description}</p>
-      )}
-
-      {post.imageUrls && post.imageUrls.length > 0 && (
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          {post.imageUrls.map((url, index) => (
-            <img
-              key={index}
-              src={url}
-              alt={`${post.title} image ${index + 1}`}
-              className="w-full h-48 object-cover rounded-lg"
-            />
-          ))}
-        </div>
-      )}
-
-      <div className="flex items-center space-x-4 mb-4">
-        <button
-          onClick={handleLike}
-          className={`flex items-center space-x-1 ${isLiked ? 'text-red-500' : 'text-gray-500'}`}
-        >
-          <span>❤️</span>
-          <span>{likeCount}</span>
-        </button>
-        <button
-          onClick={() => setShowComments(!showComments)}
-          className="flex items-center space-x-1 text-gray-500"
-        >
-          <span>💬</span>
-          <span>Comments</span>
-        </button>
-      </div>
-
-      {showComments && <CommentSection postId={post._id} />}
-    </div>
-  );
-};
-
-// PostFeed component
-const PostFeed = () => {
-  return (
-    <div className="space-y-4">
-      {samplePosts.map(post => (
-        <Post key={post._id} post={post} />
-      ))}
-    </div>
-  );
-};
 
 function Dashboard() {
   const navigate = useNavigate();
   const [username, setUsername] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [completionPosts, setCompletionPosts] = useState([]);
+  const [showPostForm, setShowPostForm] = useState(false);
+  const [reloadFeed, setReloadFeed] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -193,6 +75,11 @@ function Dashboard() {
     navigate('/login');
   };
 
+  const handlePostCreated = (newPost) => {
+    setShowPostForm(false);
+    setReloadFeed(prev => !prev); 
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -229,8 +116,8 @@ function Dashboard() {
                   <span className="text-2xl">📚</span>
                   <span className="font-medium text-blue-700 group-hover:text-blue-800">Browse Tutorials</span>
                 </button>
-                <button
-                  onClick={() => navigate('/create')}
+                <button 
+                  onClick={() =>  setShowPostForm(true)}
                   className="flex items-center justify-start space-x-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors group"
                 >
                   <span className="text-2xl">🎨</span>
@@ -248,40 +135,12 @@ function Dashboard() {
 
             {/* Combined Feed - Show both completion posts and regular posts */}
             <div className="space-y-4">
-              {/* Completion Posts Feed */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Completed Origami Tutorials</h2>
-
-                {completionPosts.length > 0 ? (
-                  <div className="space-y-6">
-                    {completionPosts.map(post => (
-                      <CompletionPost key={post.id} post={post} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <div className="text-5xl mb-4">🏆</div>
-                    <h3 className="text-lg font-medium text-gray-700 mb-2">No completed tutorials yet</h3>
-                    <p className="text-gray-500 mb-4">
-                      Complete a tutorial to see your achievements here!
-                    </p>
-                    <button
-                      onClick={() => navigate('/tutorials')}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Browse Tutorials
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Regular Posts Feed */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Feed</h2>
-                <PostFeed />
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Posts</h2>
+                  <Feed reload={reloadFeed} /> 
+                </div>
               </div>
             </div>
-          </div>
 
           {/* Right Column - Sidebar (Fixed) */}
           <div className="lg:w-80 flex-shrink-0">
@@ -327,6 +186,15 @@ function Dashboard() {
 
     </div>
       <Footer />
+
+      {/* Post Form Modal */}
+      <Modal
+        isOpen={showPostForm}
+        onClose={() => setShowPostForm(false)}
+        title="Create New Post"
+      >
+        <PostForm onSubmit={handlePostCreated} />
+      </Modal>
     </div>
   );
 }
