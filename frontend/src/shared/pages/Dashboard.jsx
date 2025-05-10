@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import FollowRequests from '../components/FollowRequests';
+import CompletionPost from '../../components/CompletionPost';
+import { postService } from '../../services/postService';
 
 function Dashboard() {
   const navigate = useNavigate();
   const [username, setUsername] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [completionPosts, setCompletionPosts] = useState([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -34,6 +37,19 @@ function Dashboard() {
         const data = await response.json();
         if (data.valid) {
           setUsername(storedUsername);
+
+          // Load all completion posts for the social feed
+          const fetchPosts = async () => {
+            try {
+              const allPosts = await postService.getAllCompletionPosts();
+              setCompletionPosts(allPosts);
+              console.log('Loaded all completion posts:', allPosts);
+            } catch (postsError) {
+              console.error('Error loading completion posts:', postsError);
+            }
+          };
+
+          fetchPosts();
         } else {
           throw new Error('Invalid token');
         }
@@ -73,7 +89,7 @@ function Dashboard() {
     <div>
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <div className="flex flex-col lg:flex-row gap-6">
@@ -83,21 +99,21 @@ function Dashboard() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button 
+                <button
                   onClick={() => navigate('/tutorials')}
                   className="flex items-center justify-start space-x-3 p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors group"
                 >
                   <span className="text-2xl">📚</span>
                   <span className="font-medium text-blue-700 group-hover:text-blue-800">Browse Tutorials</span>
                 </button>
-                <button 
+                <button
                   onClick={() => navigate('/create')}
                   className="flex items-center justify-start space-x-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors group"
                 >
                   <span className="text-2xl">🎨</span>
                   <span className="font-medium text-green-700 group-hover:text-green-800">Create New</span>
                 </button>
-                <button 
+                <button
                   onClick={() => navigate('/achievements')}
                   className="flex items-center justify-start space-x-3 p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors group"
                 >
@@ -107,9 +123,33 @@ function Dashboard() {
               </div>
             </div>
 
-            {/* Posts Feed */}
-            <div className="space-y-4 text-7xl">
-              <div className="bg-white rounded-lg h-screen shadow-sm p-6"></div>
+            {/* Completion Posts Feed */}
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Completed Origami Tutorials</h2>
+
+                {completionPosts.length > 0 ? (
+                  <div className="space-y-6">
+                    {completionPosts.map(post => (
+                      <CompletionPost key={post.id} post={post} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg">
+                    <div className="text-5xl mb-4">🏆</div>
+                    <h3 className="text-lg font-medium text-gray-700 mb-2">No completed tutorials yet</h3>
+                    <p className="text-gray-500 mb-4">
+                      Complete a tutorial to see your achievements here!
+                    </p>
+                    <button
+                      onClick={() => navigate('/tutorials')}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Browse Tutorials
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -122,7 +162,7 @@ function Dashboard() {
               <h3 className="text-lg font-semibold mb-4">Follow Requests</h3>
               <FollowRequests />
             </div>
-             
+
 
               {/* Suggested Users */}
               <section className="bg-white rounded-xl shadow-sm p-6">
@@ -142,7 +182,7 @@ function Dashboard() {
                   <button className="w-full text-left px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
                     ❓ Help Center
                   </button>
-                  <button 
+                  <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
                   >
@@ -161,4 +201,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard; 
+export default Dashboard;
