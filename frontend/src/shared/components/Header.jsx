@@ -3,12 +3,56 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import logoImage from '../../assets/logo.png';
 import SearchBar from './SearchBar';
+import Notification from '../../features/notification/Notification';
 
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  const fetchNotificationCount = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch('http://localhost:8081/api/v1/users/follow-requests', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setNotificationCount(data.length);
+      }
+    } catch (error) {
+      console.error('Error fetching notification count:', error);
+    }
+  };
+
+  // Fetch notification count on mount and set up polling
+  useEffect(() => {
+    fetchNotificationCount();
+    // Set up polling to check for updates every 30 seconds
+    const interval = setInterval(fetchNotificationCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Listen for follow request handled events
+  useEffect(() => {
+    const handleFollowRequestHandled = () => {
+      fetchNotificationCount();
+    };
+
+    window.addEventListener('followRequestHandled', handleFollowRequestHandled);
+    return () => {
+      window.removeEventListener('followRequestHandled', handleFollowRequestHandled);
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -18,8 +62,6 @@ const Header = () => {
       console.error('Failed to log out:', error);
     }
   };
-
-  const unreadCount = 1
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: '' },
@@ -78,13 +120,17 @@ const Header = () => {
                 className="p-2 text-gray-600 hover:text-blue-600 rounded-full hover:bg-gray-100 relative"
               >
                 <span className="text-xl">🔔</span>
-                {unreadCount > 0 && (
+                {notificationCount > 0 && (
                   <span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-                    {unreadCount}
+                    {notificationCount}
                   </span>
                 )}
               </button>
-
+              {showNotifications && (
+                <div className="absolute right-0 mt-2">
+                  <Notification onClose={() => setShowNotifications(false)} />
+                </div>
+              )}
             </div>
 
             {/* Logout button */}

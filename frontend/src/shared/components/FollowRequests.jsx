@@ -64,6 +64,11 @@ const FollowRequests = () => {
         throw new Error(errorText || 'Failed to accept follow request');
       }
 
+      // Dispatch event to notify that the request was handled
+      window.dispatchEvent(new CustomEvent('followRequestHandled', {
+        detail: { requestId }
+      }));
+
       // Refresh the list of requests
       await fetchFollowRequests();
     } catch (err) {
@@ -87,6 +92,11 @@ const FollowRequests = () => {
       if (!response.ok) {
         throw new Error('Failed to reject follow request');
       }
+
+      // Dispatch event to notify that the request was handled
+      window.dispatchEvent(new CustomEvent('followRequestHandled', {
+        detail: { requestId }
+      }));
 
       // Refresh the list of requests
       await fetchFollowRequests();
