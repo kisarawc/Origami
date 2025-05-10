@@ -6,6 +6,8 @@ import FollowRequests from '../components/FollowRequests';
 import PostForm from '../../features/posts/PostForm';
 import Modal from '../components/Modal';
 import Feed from '../../features/posts/Feed';
+import CompletionPost from '../../components/CompletionPost';
+import { postService } from '../../services/postService';
 
 
 
@@ -13,9 +15,9 @@ function Dashboard() {
   const navigate = useNavigate();
   const [username, setUsername] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [completionPosts, setCompletionPosts] = useState([]);
   const [showPostForm, setShowPostForm] = useState(false);
   const [reloadFeed, setReloadFeed] = useState(false);
+  const [completionPosts, setCompletionPosts] = useState([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -55,6 +57,9 @@ function Dashboard() {
           };
 
           fetchPosts();
+
+          // We're now using the Feed component which loads posts directly
+          console.log('User authenticated successfully');
         } else {
           throw new Error('Invalid token');
         }
@@ -75,9 +80,9 @@ function Dashboard() {
     navigate('/login');
   };
 
-  const handlePostCreated = (newPost) => {
+  const handlePostCreated = () => {
     setShowPostForm(false);
-    setReloadFeed(prev => !prev); 
+    setReloadFeed(prev => !prev);
   };
 
   if (isLoading) {
@@ -116,7 +121,7 @@ function Dashboard() {
                   <span className="text-2xl">📚</span>
                   <span className="font-medium text-blue-700 group-hover:text-blue-800">Browse Tutorials</span>
                 </button>
-                <button 
+                <button
                   onClick={() =>  setShowPostForm(true)}
                   className="flex items-center justify-start space-x-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors group"
                 >
@@ -135,12 +140,40 @@ function Dashboard() {
 
             {/* Combined Feed - Show both completion posts and regular posts */}
             <div className="space-y-4">
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Posts</h2>
-                  <Feed reload={reloadFeed} /> 
-                </div>
+              {/* Completion Posts Feed */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Completed Origami Tutorials</h2>
+
+                {completionPosts.length > 0 ? (
+                  <div className="space-y-6">
+                    {completionPosts.map(post => (
+                      <CompletionPost key={post.id} post={post} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg">
+                    <div className="text-5xl mb-4">🏆</div>
+                    <h3 className="text-lg font-medium text-gray-700 mb-2">No completed tutorials yet</h3>
+                    <p className="text-gray-500 mb-4">
+                      Complete a tutorial to see your achievements here!
+                    </p>
+                    <button
+                      onClick={() => navigate('/tutorials')}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Browse Tutorials
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Regular Posts Feed */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Posts</h2>
+                <Feed reload={reloadFeed} />
               </div>
             </div>
+          </div>
 
           {/* Right Column - Sidebar (Fixed) */}
           <div className="lg:w-80 flex-shrink-0">
