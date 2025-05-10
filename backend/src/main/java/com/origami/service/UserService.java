@@ -3,6 +3,7 @@ package com.origami.service;
 import com.origami.model.User;
 import com.origami.model.UserStats;
 import com.origami.model.Badge;
+import com.origami.model.BadgeCriteria;
 import com.origami.repository.UserRepository;
 import com.origami.dto.UserProfileResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final FollowRequestRepository followRequestRepository;
     private final PasswordEncoder passwordEncoder;
+    private final BadgeService badgeService;
     
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -49,15 +51,7 @@ public class UserService {
                 .followers(0)
                 .following(0)
                 .build())
-            .badges(new ArrayList<>(Arrays.asList(
-                Badge.builder()
-                    .id("welcome")
-                    .name("Welcome")
-                    .icon("👋")
-                    .description("Joined Origami World")
-                    .earnedAt(LocalDateTime.now())
-                    .build()
-            )))
+            .badges(new ArrayList<>()) // Initialize with empty badges list
             .role("user") // Set single role string
             .createdAt(LocalDateTime.now())
             .updatedAt(LocalDateTime.now())
@@ -307,5 +301,55 @@ public class UserService {
         User follower = getUserByUsername(followerUsername);
         User followed = getUserByUsername(followedUsername);
         return followRequestRepository.existsByFollowerIdAndFollowedIdAndStatus(follower.getId(), followed.getId(), "PENDING");
+    }
+
+    public void checkAndAssignBadges(String username) {
+        User user = getUserByUsername(username);
+        List<Badge> allBadges = badgeService.getAllBadges();
+        List<String> userBadgeIds = user.getBadges().stream()
+            .map(Badge::getId)
+            .toList();
+
+        for (Badge badge : allBadges) {
+            // Skip if user already has this badge
+            if (userBadgeIds.contains(badge.getId())) {
+                continue;
+            }
+
+            // Check if user meets badge criteria
+            if (meetsBadgeCriteria(user, badge.getCriteria())) {
+                // Create a copy of the badge with current earnedAt date
+                Badge earnedBadge = Badge.builder()
+                    .id(badge.getId())
+                    .name(badge.getName())
+                    .icon(badge.getIcon())
+                    .description(badge.getDescription())
+                    .criteria(badge.getCriteria())
+                    .earnedAt(LocalDateTime.now())
+                    .build();
+                
+                // Add badge to user's badges
+                user.getBadges().add(earnedBadge);
+                userRepository.save(user);
+            }
+        }
+    }
+
+    private boolean meetsBadgeCriteria(User user, BadgeCriteria criteria) {
+        return switch (criteria.getType()) {
+            case "followers" -> user.getStats().getFollowers() >= criteria.getCount();
+            case "created_tutorials" -> user.getStats().getCreations() >= criteria.getCount();
+            case "completed_tutorials" -> user.getStats().getCompletedTutorials() >= criteria.getCount();
+            case "likes_received" -> user.getStats().getLikesReceived() >= criteria.getCount();
+            case "comments_made" -> user.getStats().getCommentsMade() >= criteria.getCount();
+            case "days_active" -> {
+                long daysActive = java.time.temporal.ChronoUnit.DAYS.between(
+                    user.getCreatedAt(),
+                    java.time.LocalDateTime.now()
+                );
+                yield daysActive >= criteria.getCount();
+            }
+            default -> false;
+        };
     }
 } 

@@ -13,7 +13,7 @@ public class UserStats {
     private int creations;
     private int followers;
     private int following;
-    private int likes;
-    private int comments;
-    private int shares;
+    private int completedTutorials;
+    private int likesReceived;
+    private int commentsMade;
 } 
