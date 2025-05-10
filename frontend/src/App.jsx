@@ -12,6 +12,9 @@ import logoImage from './assets/logo.png';
 import AdminDashboard from './features/admin/pages/AdminDashboard';
 import CreateBadge from './features/admin/pages/CreateBadge';
 import CurrentBadges from './features/admin/pages/CurrentBadges';
+import MyCreations from './features/profile/pages/MyCreations';
+import PostDetail from './features/posts/pages/PostDetail';
+
 
 function Navigation() {
   const navigate = useNavigate();
@@ -126,6 +129,23 @@ function App() {
             element={
               <ProtectedRoute>
                 <UserProfile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/my-creations"
+            element={
+              <ProtectedRoute>
+                <MyCreations />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/post/:id"
+            element={
+              <ProtectedRoute>
+                <PostDetail />
               </ProtectedRoute>
             }
           />
