@@ -8,7 +8,6 @@ import PostForm from './PostForm';
 import { useNavigate } from 'react-router-dom';
 import CommentSection from '../../features/comment/comment';
 
-
 const PostCard = ({ post, onPostUpdate, onPostDelete, isDetailView = false, deleting = false, enableNavigation = false }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -255,7 +254,15 @@ const PostCard = ({ post, onPostUpdate, onPostDelete, isDetailView = false, dele
           </div>
         )}
       </div>
-
+      {/* Title and Description */}
+      {!showEditModal && (
+        <div className="px-4 pt-3 pb-2 border-b border-gray-100">
+          <h2 className="text-base font-semibold text-gray-900 line-clamp-2">{post.title}</h2>
+          {post.description && (
+            <p className="text-sm text-gray-700 mt-1 line-clamp-3">{post.description}</p>
+          )}
+        </div>
+      )}
       {/* Edit Form */}
       <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="Edit Post">
         <PostForm
@@ -294,7 +301,7 @@ const PostCard = ({ post, onPostUpdate, onPostDelete, isDetailView = false, dele
         </div>
       </Modal>
 
-      {/* Media Display */}
+      {/* Media Display (Slider) */}
       {!showEditModal && mediaArray.length > 0 && (
         <div className="w-full aspect-square relative overflow-hidden bg-gray-100">
           {isVideo(mediaArray[currentImageIndex]) ? (
@@ -337,7 +344,9 @@ const PostCard = ({ post, onPostUpdate, onPostDelete, isDetailView = false, dele
         </div>
       )}
 
-      <div className="flex items-center space-x-4 mb-4 mt-3 mx-2">
+
+
+      <div className="flex items-center space-x-4 mb-4 mt-2 ml-3">
         <button
           onClick={handleLike}
           disabled={likeLoading}
@@ -360,46 +369,8 @@ const PostCard = ({ post, onPostUpdate, onPostDelete, isDetailView = false, dele
 
       {showComments && <CommentSection postId={post.id} />}
 
-      {/* Edit Modal */}
-      <Modal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        title="Edit Post"
-      >
-        <PostForm
-          post={post}
-          onSubmit={(updatedPost) => {
-            onPostUpdate(updatedPost);
-            setShowEditModal(false);
-          }}
-        />
-      </Modal>
 
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        title="Confirm Delete"
-      >
-        <div className="p-4">
-          <p>Are you sure you want to delete this post?</p>
-          <div className="mt-4 flex justify-end space-x-2">
-            <button
-              onClick={() => setShowDeleteModal(false)}
-              className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </button>
-          </div>
-        </div>
-      </Modal>
+    
     </div>
   );
 };
